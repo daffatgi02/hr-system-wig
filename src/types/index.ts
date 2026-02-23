@@ -17,6 +17,7 @@ export type Employee = {
     isActive: boolean;
     shiftId?: string | null;
     bypassLocation: boolean;
+    workDays?: number[];
     locations?: { id: string; name: string }[];
 };
 
@@ -53,6 +54,10 @@ export type WorkShift = {
     startTime: string;
     endTime: string;
     isDefault: boolean;
+    lateCheckIn: number;
+    earlyCheckIn: number;
+    lateCheckOut: number;
+    earlyCheckOut: number;
 };
 
 export type LeaveRequest = {
@@ -75,6 +80,8 @@ export type NewsItem = {
     author: string;
     createdAt: string;
     isPinned: boolean;
+    mediaUrl?: string | null;
+    mediaName?: string | null;
 };
 
 export type TodoItem = {

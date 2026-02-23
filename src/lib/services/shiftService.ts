@@ -16,6 +16,10 @@ export async function createShift(data: Omit<WorkShift, "id">): Promise<WorkShif
             startTime: data.startTime,
             endTime: data.endTime,
             isDefault: data.isDefault,
+            lateCheckIn: data.lateCheckIn ?? 0,
+            earlyCheckIn: data.earlyCheckIn ?? 0,
+            lateCheckOut: data.lateCheckOut ?? 0,
+            earlyCheckOut: data.earlyCheckOut ?? 0,
         },
     });
     return row as unknown as WorkShift;
@@ -33,6 +37,10 @@ export async function updateShift(id: string, data: Partial<WorkShift>): Promise
                 ...(data.startTime !== undefined && { startTime: data.startTime }),
                 ...(data.endTime !== undefined && { endTime: data.endTime }),
                 ...(data.isDefault !== undefined && { isDefault: data.isDefault }),
+                ...(data.lateCheckIn !== undefined && { lateCheckIn: data.lateCheckIn }),
+                ...(data.earlyCheckIn !== undefined && { earlyCheckIn: data.earlyCheckIn }),
+                ...(data.lateCheckOut !== undefined && { lateCheckOut: data.lateCheckOut }),
+                ...(data.earlyCheckOut !== undefined && { earlyCheckOut: data.earlyCheckOut }),
             },
         });
         return row as unknown as WorkShift;

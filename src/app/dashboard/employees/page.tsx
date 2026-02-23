@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Plus, Search, Pencil, Trash2, X, Loader2, Clock, Mail, Phone, Building, Briefcase, Calendar, Key, Layers } from "lucide-react";
+import { Users, Plus, Search, Pencil, Trash2, X, Loader2, Clock, Mail, Phone, Building, Briefcase, Calendar, Key, Layers, CalendarDays } from "lucide-react";
 
 interface WorkShift { id: string; name: string; startTime: string; endTime: string; isDefault: boolean; }
 interface Employee {
     id: string; employeeId: string; name: string; email: string; phone: string;
     department: string; division?: string | null; position: string; role: string; isActive: boolean; joinDate: string; shiftId?: string;
-    bypassLocation: boolean; locations?: { id: string; name: string }[];
+    bypassLocation: boolean; workDays?: number[]; locations?: { id: string; name: string }[];
 }
 
 interface Location { id: string; name: string; }
@@ -30,11 +30,15 @@ export default function EmployeesPage() {
     const [sendingPassword, setSendingPassword] = useState<string | null>(null);
     const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+    const DAY_LABELS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5];
+
     const [form, setForm] = useState({
         employeeId: "", name: "", email: "", phone: "", department: "", division: "", position: "",
         role: "employee" as "employee" | "hr", password: "password123", joinDate: new Date().toISOString().split("T")[0],
         totalLeave: 12, usedLeave: 0, isActive: true, shiftId: "",
-        bypassLocation: false, locations: [] as { id: string; name: string }[],
+        bypassLocation: false, workDays: DEFAULT_WORK_DAYS as number[],
+        locations: [] as { id: string; name: string }[],
     });
 
     useEffect(() => {
@@ -74,7 +78,8 @@ export default function EmployeesPage() {
             employeeId: "", name: "", email: "", phone: "", department: "", division: "", position: "",
             role: "employee", password: "password123", joinDate: new Date().toISOString().split("T")[0],
             totalLeave: 12, usedLeave: 0, isActive: true, shiftId: def?.id || "",
-            bypassLocation: false, locations: [],
+            bypassLocation: false, workDays: DEFAULT_WORK_DAYS,
+            locations: [],
         });
         setEditId(null);
     };
@@ -106,10 +111,26 @@ export default function EmployeesPage() {
             usedLeave: 0,
             shiftId: emp.shiftId || "",
             bypassLocation: emp.bypassLocation || false,
+            workDays: (emp.workDays as number[]) ?? DEFAULT_WORK_DAYS,
             locations: emp.locations || [],
         } as typeof form);
         setEditId(emp.id);
         setShowForm(true);
+    };
+
+    const toggleDay = (day: number) => {
+        setForm((f) => ({
+            ...f,
+            workDays: f.workDays.includes(day)
+                ? f.workDays.filter((d) => d !== day)
+                : [...f.workDays, day].sort(),
+        }));
+    };
+
+    const formatWorkDays = (days?: number[]) => {
+        if (!days || days.length === 0) return "-";
+        if (days.length === 7) return "Setiap Hari";
+        return days.map((d) => DAY_LABELS[d]).join(", ");
     };
 
     const handleDelete = async (id: string) => {
@@ -225,7 +246,10 @@ export default function EmployeesPage() {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="hidden lg:table-cell text-xs">{getShiftName(e.shiftId)}</td>
+                                        <td className="hidden lg:table-cell text-xs">
+                                            <div>{getShiftName(e.shiftId)}</div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">{formatWorkDays(e.workDays)}</div>
+                                        </td>
                                         <td><span className={`badge ${e.isActive ? "badge-success" : "badge-error"}`}>{e.isActive ? "Aktif" : "Nonaktif"}</span></td>
                                         <td>
                                             <div className="flex items-center gap-1.5">
@@ -328,6 +352,26 @@ export default function EmployeesPage() {
                                 <div className="form-group !mb-0">
                                     <label className="form-label"><span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Tanggal Bergabung</span></label>
                                     <input type="date" className="form-input" value={form.joinDate} onChange={(e) => setForm({ ...form, joinDate: e.target.value })} required />
+                                </div>
+                            </div>
+
+                            {/* Work Days */}
+                            <div className="form-group !mb-0">
+                                <label className="form-label"><span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Hari Kerja</span></label>
+                                <div className="flex flex-wrap gap-2">
+                                    {DAY_LABELS.map((label, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => toggleDay(idx)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${form.workDays.includes(idx)
+                                                    ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                                                    : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+                                                }`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                             {/* Leave */}

@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Megaphone, Plus, Pencil, Trash2, Pin, X, Loader2 } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Megaphone, Plus, Pencil, Trash2, Pin, X, Loader2, Upload, Paperclip, FileText } from "lucide-react";
 
 interface NewsItem {
     id: string; title: string; content: string;
     category: string; author: string; createdAt: string; isPinned: boolean;
+    mediaUrl?: string | null; mediaName?: string | null;
 }
 
-const INIT_FORM = { title: "", content: "", category: "announcement", isPinned: false };
+const INIT_FORM = { title: "", content: "", category: "announcement", isPinned: false, mediaUrl: "" as string | null, mediaName: "" as string | null };
 
 export default function NewsManagementPage() {
     const [news, setNews] = useState<NewsItem[]>([]);
@@ -16,26 +17,70 @@ export default function NewsManagementPage() {
     const [editId, setEditId] = useState<string | null>(null);
     const [form, setForm] = useState(INIT_FORM);
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetch("/api/news").then((r) => r.json()).then(setNews);
     }, []);
 
+    const uploadFile = async (file: File): Promise<{ url: string; name: string } | null> => {
+        setUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            const res = await fetch("/api/news/upload", { method: "POST", body: fd });
+            if (!res.ok) {
+                const err = await res.json();
+                alert(err.error || "Upload gagal");
+                return null;
+            }
+            return await res.json();
+        } catch {
+            alert("Upload gagal, cek koneksi");
+            return null;
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
+        // Upload file if selected
+        let mediaUrl = form.mediaUrl;
+        let mediaName = form.mediaName;
+        const fileInput = fileRef.current;
+        if (fileInput?.files?.[0]) {
+            const result = await uploadFile(fileInput.files[0]);
+            if (result) {
+                mediaUrl = result.url;
+                mediaName = result.name;
+            } else {
+                setLoading(false);
+                return;
+            }
+        }
+
         const method = editId ? "PUT" : "POST";
-        const body = editId ? { ...form, id: editId, author: "Admin HR", createdAt: new Date().toISOString() } : { ...form, author: "Admin HR", createdAt: new Date().toISOString() };
+        const payload = {
+            ...form,
+            mediaUrl: mediaUrl || null,
+            mediaName: mediaName || null,
+            ...(editId ? { id: editId } : {}),
+            author: "Admin HR",
+            createdAt: new Date().toISOString(),
+        };
+
         const res = await fetch("/api/news", {
-            method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+            method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
         });
         if (res.ok) {
             const data = await res.json();
             if (editId) setNews((prev) => prev.map((n) => (n.id === editId ? data : n)));
             else setNews((prev) => [data, ...prev]);
-            setShowForm(false);
-            setEditId(null);
-            setForm(INIT_FORM);
+            closeForm();
         }
         setLoading(false);
     };
@@ -53,6 +98,31 @@ export default function NewsManagementPage() {
             body: JSON.stringify({ id: item.id, isPinned: !item.isPinned }),
         });
         if (res.ok) setNews((prev) => prev.map((n) => (n.id === item.id ? { ...n, isPinned: !n.isPinned } : n)));
+    };
+
+    const openEdit = (item: NewsItem) => {
+        setEditId(item.id);
+        setForm({
+            title: item.title,
+            content: item.content,
+            category: item.category,
+            isPinned: item.isPinned,
+            mediaUrl: item.mediaUrl || null,
+            mediaName: item.mediaName || null,
+        });
+        setShowForm(true);
+    };
+
+    const closeForm = () => {
+        setShowForm(false);
+        setEditId(null);
+        setForm(INIT_FORM);
+        if (fileRef.current) fileRef.current.value = "";
+    };
+
+    const removeMedia = () => {
+        setForm({ ...form, mediaUrl: null, mediaName: null });
+        if (fileRef.current) fileRef.current.value = "";
     };
 
     const getCategoryLabel = (cat: string) => {
@@ -88,6 +158,11 @@ export default function NewsManagementPage() {
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {item.isPinned && <Pin className="w-3 h-3 text-[var(--primary)]" />}
                                         <span className="badge badge-primary">{getCategoryLabel(item.category)}</span>
+                                        {item.mediaUrl && (
+                                            <span className="badge bg-blue-50 text-blue-600 text-[10px] flex items-center gap-1">
+                                                <Paperclip className="w-2.5 h-2.5" /> Lampiran
+                                            </span>
+                                        )}
                                     </div>
                                     <h3 className="text-sm font-semibold text-[var(--text-primary)]">{item.title}</h3>
                                     <p className="text-xs text-[var(--text-secondary)] line-clamp-2">{item.content}</p>
@@ -97,7 +172,7 @@ export default function NewsManagementPage() {
                                     <button onClick={() => togglePin(item)} className={`btn btn-ghost btn-sm !p-1.5 ${item.isPinned ? "text-[var(--primary)]" : ""}`} title={item.isPinned ? "Unpin" : "Pin"}>
                                         <Pin className="w-3.5 h-3.5" />
                                     </button>
-                                    <button onClick={() => { setEditId(item.id); setForm({ title: item.title, content: item.content, category: item.category, isPinned: item.isPinned }); setShowForm(true); }} className="btn btn-ghost btn-sm !p-1.5">
+                                    <button onClick={() => openEdit(item)} className="btn btn-ghost btn-sm !p-1.5">
                                         <Pencil className="w-3.5 h-3.5" />
                                     </button>
                                     <button onClick={() => handleDelete(item.id)} className="btn btn-ghost btn-sm !p-1.5 text-red-500 hover:!bg-red-50">
@@ -112,11 +187,11 @@ export default function NewsManagementPage() {
 
             {/* Form Modal */}
             {showForm && (
-                <div className="modal-overlay" onClick={() => setShowForm(false)}>
+                <div className="modal-overlay" onClick={closeForm}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2 className="modal-title">{editId ? "Edit Berita" : "Buat Berita Baru"}</h2>
-                            <button className="modal-close" onClick={() => setShowForm(false)}><X className="w-4 h-4" /></button>
+                            <button className="modal-close" onClick={closeForm}><X className="w-4 h-4" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="form-group !mb-0">
@@ -136,12 +211,52 @@ export default function NewsManagementPage() {
                                 <label className="form-label">Konten</label>
                                 <textarea className="form-textarea min-h-[150px]" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required />
                             </div>
+
+                            {/* Media Upload */}
+                            <div className="form-group !mb-0">
+                                <label className="form-label flex items-center gap-1">
+                                    <Paperclip className="w-3 h-3" /> Lampiran Media
+                                </label>
+                                {form.mediaUrl && form.mediaName ? (
+                                    <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]">
+                                        <FileText className="w-4 h-4 text-[var(--primary)] shrink-0" />
+                                        <span className="text-xs text-[var(--text-secondary)] truncate flex-1">{form.mediaName}</span>
+                                        <button type="button" onClick={removeMedia} className="text-red-400 hover:text-red-600 shrink-0">
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <input
+                                            ref={fileRef}
+                                            type="file"
+                                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                                            className="hidden"
+                                            id="news-media-upload"
+                                            onChange={() => { /* handled on submit */ }}
+                                        />
+                                        <label
+                                            htmlFor="news-media-upload"
+                                            className="flex items-center justify-center gap-2 p-4 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--primary)] text-[var(--text-muted)] hover:text-[var(--primary)] cursor-pointer transition-colors"
+                                        >
+                                            <Upload className="w-4 h-4" />
+                                            <span className="text-xs font-medium">Pilih file (maks 10MB)</span>
+                                        </label>
+                                    </div>
+                                )}
+                                {uploading && (
+                                    <div className="flex items-center gap-2 mt-2 text-xs text-[var(--text-muted)]">
+                                        <Loader2 className="w-3 h-3 animate-spin" /> Mengupload...
+                                    </div>
+                                )}
+                            </div>
+
                             <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
                                 <input type="checkbox" checked={form.isPinned} onChange={(e) => setForm({ ...form, isPinned: e.target.checked })} className="w-4 h-4 accent-[var(--primary)]" />
                                 Pin berita ini
                             </label>
-                            <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                            <button type="submit" className="btn btn-primary w-full" disabled={loading || uploading}>
+                                {(loading || uploading) ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                                 {editId ? "Simpan Perubahan" : "Publikasikan"}
                             </button>
                         </form>

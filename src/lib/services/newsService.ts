@@ -17,6 +17,8 @@ export async function createNews(data: Omit<NewsItem, "id">): Promise<NewsItem> 
             author: data.author,
             createdAt: data.createdAt,
             isPinned: data.isPinned,
+            mediaUrl: data.mediaUrl ?? null,
+            mediaName: data.mediaName ?? null,
         },
     });
     return row as unknown as NewsItem;
@@ -31,6 +33,8 @@ export async function updateNews(id: string, data: Partial<NewsItem>): Promise<N
                 ...(data.content !== undefined && { content: data.content }),
                 ...(data.category !== undefined && { category: data.category }),
                 ...(data.isPinned !== undefined && { isPinned: data.isPinned }),
+                ...(data.mediaUrl !== undefined && { mediaUrl: data.mediaUrl }),
+                ...(data.mediaName !== undefined && { mediaName: data.mediaName }),
             },
         });
         return row as unknown as NewsItem;

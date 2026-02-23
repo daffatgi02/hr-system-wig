@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Newspaper, Pin, X, Megaphone, PartyPopper, BookOpen, Globe } from "lucide-react";
+import { Newspaper, Pin, X, Megaphone, PartyPopper, BookOpen, Globe, Download, FileText, Paperclip } from "lucide-react";
 
 interface NewsItem {
     id: string;
@@ -11,6 +11,8 @@ interface NewsItem {
     author: string;
     createdAt: string;
     isPinned: boolean;
+    mediaUrl?: string | null;
+    mediaName?: string | null;
 }
 
 export default function NewsPage() {
@@ -41,6 +43,8 @@ export default function NewsPage() {
         { key: "general", label: "Umum" },
     ];
 
+    const isImage = (url: string) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+
     return (
         <div className="space-y-6 animate-[fadeIn_0.5s_ease]">
             <div>
@@ -58,8 +62,8 @@ export default function NewsPage() {
                         key={f.key}
                         onClick={() => setFilter(f.key)}
                         className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${filter === f.key
-                                ? "bg-[var(--primary)] text-white shadow-sm"
-                                : "bg-[var(--secondary)] text-[var(--text-secondary)] hover:bg-[var(--muted)]"
+                            ? "bg-[var(--primary)] text-white shadow-sm"
+                            : "bg-[var(--secondary)] text-[var(--text-secondary)] hover:bg-[var(--muted)]"
                             }`}
                     >
                         {f.label}
@@ -88,6 +92,11 @@ export default function NewsPage() {
                                         <div className="flex items-center gap-2 mb-1">
                                             {item.isPinned && <Pin className="w-3 h-3 text-[var(--primary)] shrink-0" />}
                                             <span className="badge badge-primary">{info.label}</span>
+                                            {item.mediaUrl && (
+                                                <span className="badge bg-blue-50 text-blue-600 text-[10px] flex items-center gap-1">
+                                                    <Paperclip className="w-2.5 h-2.5" /> Lampiran
+                                                </span>
+                                            )}
                                         </div>
                                         <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">{item.title}</h3>
                                         <p className="text-xs text-[var(--text-secondary)] line-clamp-2">{item.content}</p>
@@ -118,6 +127,28 @@ export default function NewsPage() {
                             <span className="text-xs text-[var(--text-muted)]">{new Date(selected.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span>
                         </div>
                         <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{selected.content}</p>
+
+                        {/* Media Preview & Download */}
+                        {selected.mediaUrl && (
+                            <div className="mt-5 pt-4 border-t border-[var(--border)]">
+                                {isImage(selected.mediaUrl) && (
+                                    <div className="mb-3 rounded-lg overflow-hidden border border-[var(--border)]">
+                                        <img src={selected.mediaUrl} alt={selected.mediaName || "Media"} className="w-full max-h-64 object-contain bg-[var(--bg-secondary)]" />
+                                    </div>
+                                )}
+                                <a
+                                    href={selected.mediaUrl}
+                                    download={selected.mediaName || "file"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--primary)] text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {isImage(selected.mediaUrl) ? <Download className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                                    Unduh {selected.mediaName || "File"}
+                                </a>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

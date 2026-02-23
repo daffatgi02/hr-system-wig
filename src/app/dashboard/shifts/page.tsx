@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, Plus, Pencil, Trash2, X, Loader2, Star } from "lucide-react";
+import { Clock, Plus, Pencil, Trash2, X, Loader2, Star, ShieldAlert, Timer } from "lucide-react";
 
 interface WorkShift {
     id: string;
@@ -9,9 +9,22 @@ interface WorkShift {
     startTime: string;
     endTime: string;
     isDefault: boolean;
+    lateCheckIn: number;
+    earlyCheckIn: number;
+    lateCheckOut: number;
+    earlyCheckOut: number;
 }
 
-const INIT_FORM = { name: "", startTime: "08:00", endTime: "17:00", isDefault: false };
+const INIT_FORM = {
+    name: "",
+    startTime: "08:00",
+    endTime: "17:00",
+    isDefault: false,
+    lateCheckIn: 0,
+    earlyCheckIn: 0,
+    lateCheckOut: 0,
+    earlyCheckOut: 0,
+};
 
 export default function ShiftsPage() {
     const [shifts, setShifts] = useState<WorkShift[]>([]);
@@ -35,7 +48,6 @@ export default function ShiftsPage() {
             body: JSON.stringify(body),
         });
         if (res.ok) {
-            // Refetch to get accurate state (especially for isDefault toggling)
             const latest = await fetch("/api/shifts").then((r) => r.json());
             setShifts(latest);
             closeForm();
@@ -61,6 +73,21 @@ export default function ShiftsPage() {
         }
     };
 
+    const openEdit = (shift: WorkShift) => {
+        setEditId(shift.id);
+        setForm({
+            name: shift.name,
+            startTime: shift.startTime,
+            endTime: shift.endTime,
+            isDefault: shift.isDefault,
+            lateCheckIn: shift.lateCheckIn ?? 0,
+            earlyCheckIn: shift.earlyCheckIn ?? 0,
+            lateCheckOut: shift.lateCheckOut ?? 0,
+            earlyCheckOut: shift.earlyCheckOut ?? 0,
+        });
+        setShowForm(true);
+    };
+
     const closeForm = () => {
         setShowForm(false);
         setEditId(null);
@@ -73,9 +100,12 @@ export default function ShiftsPage() {
         const [sh, sm] = start.split(":").map(Number);
         const [eh, em] = end.split(":").map(Number);
         let diff = (eh * 60 + em) - (sh * 60 + sm);
-        if (diff < 0) diff += 24 * 60; // overnight
+        if (diff < 0) diff += 24 * 60;
         return `${Math.floor(diff / 60)}j ${diff % 60}m`;
     };
+
+    const hasTolerance = (s: WorkShift) =>
+        s.lateCheckIn > 0 || s.earlyCheckIn > 0 || s.lateCheckOut > 0 || s.earlyCheckOut > 0;
 
     return (
         <div className="space-y-6 animate-[fadeIn_0.5s_ease]">
@@ -124,6 +154,32 @@ export default function ShiftsPage() {
                                     </div>
                                 </div>
                                 <p className="text-xs text-[var(--text-muted)]">Durasi: {calcHours(shift.startTime, shift.endTime)}</p>
+
+                                {/* Tolerance badges */}
+                                {hasTolerance(shift) && (
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                        {shift.earlyCheckIn > 0 && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">
+                                                CI awal {shift.earlyCheckIn}m
+                                            </span>
+                                        )}
+                                        {shift.lateCheckIn > 0 && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium">
+                                                CI toleransi {shift.lateCheckIn}m
+                                            </span>
+                                        )}
+                                        {shift.earlyCheckOut > 0 && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium">
+                                                CO awal {shift.earlyCheckOut}m
+                                            </span>
+                                        )}
+                                        {shift.lateCheckOut > 0 && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-medium">
+                                                CO lebih {shift.lateCheckOut}m
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-[var(--border)]">
@@ -132,7 +188,7 @@ export default function ShiftsPage() {
                                         <Star className="w-3 h-3" /> Set Default
                                     </button>
                                 )}
-                                <button onClick={() => { setEditId(shift.id); setForm({ name: shift.name, startTime: shift.startTime, endTime: shift.endTime, isDefault: shift.isDefault }); setShowForm(true); }} className="btn btn-ghost btn-sm !p-1.5">
+                                <button onClick={() => openEdit(shift)} className="btn btn-ghost btn-sm !p-1.5">
                                     <Pencil className="w-3.5 h-3.5" />
                                 </button>
                                 <button onClick={() => handleDelete(shift.id)} className="btn btn-ghost btn-sm !p-1.5 text-red-500 hover:!bg-red-50">
@@ -167,6 +223,75 @@ export default function ShiftsPage() {
                                     <input type="time" className="form-input" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} required />
                                 </div>
                             </div>
+
+                            {/* Tolerance Settings */}
+                            <div className="rounded-lg border border-[var(--border)] p-4 space-y-3 bg-[var(--bg-secondary)]">
+                                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                                    <Timer className="w-4 h-4 text-[var(--primary)]" />
+                                    Pengaturan Toleransi (menit)
+                                </div>
+                                <p className="text-[11px] text-[var(--text-muted)] -mt-1">Atur batas toleransi waktu check-in dan check-out. Isi 0 untuk tanpa toleransi.</p>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="form-group !mb-0">
+                                        <label className="form-label text-[11px]">
+                                            <ShieldAlert className="w-3 h-3 inline mr-1 text-amber-500" />
+                                            Toleransi Terlambat Masuk
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            className="form-input"
+                                            placeholder="0"
+                                            value={form.lateCheckIn}
+                                            onChange={(e) => setForm({ ...form, lateCheckIn: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                    <div className="form-group !mb-0">
+                                        <label className="form-label text-[11px]">
+                                            <Clock className="w-3 h-3 inline mr-1 text-blue-500" />
+                                            Boleh Masuk Lebih Awal
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            className="form-input"
+                                            placeholder="0"
+                                            value={form.earlyCheckIn}
+                                            onChange={(e) => setForm({ ...form, earlyCheckIn: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                    <div className="form-group !mb-0">
+                                        <label className="form-label text-[11px]">
+                                            <ShieldAlert className="w-3 h-3 inline mr-1 text-violet-500" />
+                                            Boleh Pulang Lebih Awal
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            className="form-input"
+                                            placeholder="0"
+                                            value={form.earlyCheckOut}
+                                            onChange={(e) => setForm({ ...form, earlyCheckOut: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                    <div className="form-group !mb-0">
+                                        <label className="form-label text-[11px]">
+                                            <Timer className="w-3 h-3 inline mr-1 text-emerald-500" />
+                                            Boleh Pulang Lebih Lambat
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            className="form-input"
+                                            placeholder="0"
+                                            value={form.lateCheckOut}
+                                            onChange={(e) => setForm({ ...form, lateCheckOut: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
                                 <input type="checkbox" checked={form.isDefault} onChange={(e) => setForm({ ...form, isDefault: e.target.checked })} className="w-4 h-4 accent-[var(--primary)]" />
                                 Jadikan shift default

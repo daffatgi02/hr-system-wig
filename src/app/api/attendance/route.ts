@@ -95,8 +95,47 @@ export async function POST(request: NextRequest) {
         }
 
         const now = new Date();
-        const hour = now.getHours();
-        const status = hour > 9 ? "late" : "present";
+
+        // Validate work day
+        const workDays = (employee as Record<string, unknown>).workDays as number[] | null;
+        if (workDays && workDays.length > 0) {
+            const todayDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+            if (!workDays.includes(todayDay)) {
+                return NextResponse.json(
+                    { error: "Hari ini bukan hari kerja Anda" },
+                    { status: 400 }
+                );
+            }
+        }
+
+        // Determine attendance status using shift tolerance
+        let status: "present" | "late" = "present";
+
+        // Fetch the employee's shift, or fall back to the default shift
+        let shift = null;
+        if (employee.shiftId) {
+            shift = await prisma.workShift.findUnique({ where: { id: employee.shiftId } });
+        }
+        if (!shift) {
+            shift = await prisma.workShift.findFirst({ where: { isDefault: true } });
+        }
+
+        if (shift) {
+            const [shiftHour, shiftMin] = shift.startTime.split(":").map(Number);
+            const shiftStartMinutes = shiftHour * 60 + shiftMin;
+            const tolerance = shift.lateCheckIn ?? 0;
+            const deadlineMinutes = shiftStartMinutes + tolerance;
+
+            const clockInMinutes = now.getHours() * 60 + now.getMinutes();
+            if (clockInMinutes > deadlineMinutes) {
+                status = "late";
+            }
+        } else {
+            // Fallback: no shift configured, use legacy logic
+            if (now.getHours() > 9) {
+                status = "late";
+            }
+        }
 
         const record = await createAttendance({
             employeeId: session.employeeId,
