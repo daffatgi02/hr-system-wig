@@ -57,6 +57,7 @@ const navItems: NavItem[] = [
             { href: "/dashboard/overtime", label: "Lembur" },
             { href: "/dashboard/payroll", label: "Payroll" },
             { href: "/dashboard/master-payroll", label: "Pengaturan Payroll" },
+            { href: "/dashboard/pph21-calculator", label: "Kalkulator PPh 21" },
         ]
     },
     { href: "/dashboard/reports", icon: FileDown, label: "Laporan" },
