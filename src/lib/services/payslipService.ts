@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { PayslipRecord } from "@/types";
+import logger from "@/lib/logger";
 
 export async function getPayslips(employeeId?: string): Promise<PayslipRecord[]> {
     const rows = await prisma.payslipRecord.findMany({
@@ -15,6 +16,7 @@ export async function getPayslips(employeeId?: string): Promise<PayslipRecord[]>
 }
 
 export async function createPayslip(data: Omit<PayslipRecord, "id">): Promise<PayslipRecord> {
+    logger.info("Payslip dibuat", { employeeId: data.employeeId, period: data.period, netSalary: data.netSalary });
     const row = await prisma.payslipRecord.create({
         data: {
             employeeId: data.employeeId,

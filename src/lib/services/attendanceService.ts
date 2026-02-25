@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { AttendanceRecord } from "@/types";
+import logger from "@/lib/logger";
 
 export async function getAttendanceRecords(employeeId?: string): Promise<AttendanceRecord[]> {
     const rows = await prisma.attendanceRecord.findMany({
@@ -29,6 +30,7 @@ export async function getAttendanceByDate(employeeId: string, date: string): Pro
 }
 
 export async function createAttendance(data: Omit<AttendanceRecord, "id">): Promise<AttendanceRecord> {
+    logger.info("Clock-in recorded", { employeeId: data.employeeId, date: data.date, status: data.status });
     const row = await prisma.attendanceRecord.create({
         data: {
             employeeId: data.employeeId,
@@ -72,7 +74,8 @@ export async function updateAttendance(id: string, data: Partial<AttendanceRecor
             clockOutLocation: row.clockOutLocation as AttendanceRecord["clockOutLocation"],
             status: row.status as AttendanceRecord["status"],
         } as AttendanceRecord;
-    } catch {
+    } catch (error) {
+        logger.error("Gagal update attendance", { id, error });
         return null;
     }
 }

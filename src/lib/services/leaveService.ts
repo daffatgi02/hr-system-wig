@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { LeaveRequest } from "@/types";
+import logger from "@/lib/logger";
 
 export async function getLeaveRequests(employeeId?: string): Promise<any[]> {
     const rows = await prisma.leaveRequest.findMany({
@@ -20,6 +21,7 @@ export async function getLeaveRequests(employeeId?: string): Promise<any[]> {
 }
 
 export async function createLeaveRequest(data: Omit<LeaveRequest, "id">): Promise<LeaveRequest> {
+    logger.info("Pengajuan cuti baru", { employeeId: data.employeeId, type: data.type, startDate: data.startDate, endDate: data.endDate });
     const row = await prisma.leaveRequest.create({
         data: {
             employeeId: data.employeeId,
@@ -46,6 +48,7 @@ export async function updateLeaveRequest(id: string, data: Partial<LeaveRequest>
     try {
         // If approving, we need to update employee leave balance
         if (data.status === "approved") {
+            logger.info("Cuti disetujui", { leaveId: id });
             const request = await prisma.leaveRequest.findUnique({
                 where: { id },
                 include: { employee: true }
@@ -75,7 +78,7 @@ export async function updateLeaveRequest(id: string, data: Partial<LeaveRequest>
         });
         return row as unknown as LeaveRequest;
     } catch (err) {
-        console.error("[LeaveService Update Error]:", err);
+        logger.error("Gagal update leave request", { id, error: err });
         return null;
     }
 }

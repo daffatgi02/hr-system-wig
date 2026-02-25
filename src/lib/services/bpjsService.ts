@@ -1,110 +1,31 @@
 /**
  * BPJS Kesehatan & Ketenagakerjaan Calculator Service
  *
- * Dasar hukum:
- * - BPJS Kesehatan: Perpres 64/2020 (PPU: 5% → 4% perusahaan + 1% karyawan)
- * - JHT: PP 46/2015 (5,7% → 3,7% perusahaan + 2% karyawan)
- * - JKK: PP 44/2015 (0,24%–1,74% sepenuhnya perusahaan)
- * - JKM: PP 44/2015 (0,3% sepenuhnya perusahaan)
- * - JP:  PP 45/2015 (3% → 2% perusahaan + 1% karyawan, cap upah)
+ * Logika kalkulasi murni — types & constants di-import dari @/lib/constants/bpjsConstants
  */
 
-// ─── Types ───────────────────────────────────────────────────────────
+import {
+    type JkkRiskLevel,
+    type BpjsInput,
+    type BpjsKesehatanResult,
+    type BpjsTkProgramResult,
+    type BpjsKetenagakerjaanResult,
+    type BpjsCalculationResult,
+    BPJS_KES_RATE_COMPANY,
+    BPJS_KES_RATE_EMPLOYEE,
+    BPJS_KES_SALARY_CAP,
+    JHT_RATE_COMPANY,
+    JHT_RATE_EMPLOYEE,
+    JKK_RATES,
+    JKM_RATE,
+    JP_RATE_COMPANY,
+    JP_RATE_EMPLOYEE,
+    JP_SALARY_CAP,
+} from "@/lib/constants/bpjsConstants";
 
-/** Tingkat risiko lingkungan kerja untuk JKK */
-export type JkkRiskLevel = 1 | 2 | 3 | 4 | 5;
-
-/** Input kalkulasi BPJS */
-export interface BpjsInput {
-    grossMonthlyIncome: number;
-    jkkRiskLevel: JkkRiskLevel;
-}
-
-/** Rincian iuran satu program (split perusahaan & karyawan) */
-export interface ContributionSplit {
-    company: number;
-    employee: number;
-    total: number;
-}
-
-/** Hasil kalkulasi BPJS Kesehatan */
-export interface BpjsKesehatanResult {
-    baseSalary: number;         // Upah dasar perhitungan (setelah capping)
-    isCapped: boolean;          // Apakah terkena capping
-    rate: { company: number; employee: number; total: number };
-    contribution: ContributionSplit;
-}
-
-/** Hasil kalkulasi satu program BPJS Ketenagakerjaan */
-export interface BpjsTkProgramResult {
-    programName: string;
-    baseSalary: number;
-    isCapped: boolean;
-    rate: { company: number; employee: number; total: number };
-    contribution: ContributionSplit;
-}
-
-/** Hasil kalkulasi seluruh BPJS Ketenagakerjaan */
-export interface BpjsKetenagakerjaanResult {
-    jht: BpjsTkProgramResult;
-    jkk: BpjsTkProgramResult;
-    jkm: BpjsTkProgramResult;
-    jp: BpjsTkProgramResult;
-    totalCompany: number;
-    totalEmployee: number;
-    totalAll: number;
-}
-
-/** Hasil kalkulasi gabungan semua BPJS */
-export interface BpjsCalculationResult {
-    grossMonthlyIncome: number;
-    jkkRiskLevel: JkkRiskLevel;
-    kesehatan: BpjsKesehatanResult;
-    ketenagakerjaan: BpjsKetenagakerjaanResult;
-    grandTotal: {
-        company: number;     // Total beban perusahaan
-        employee: number;    // Total potongan karyawan
-        total: number;       // Grand total
-    };
-    takeHomePay: number;   // Gaji bruto - total potongan karyawan
-}
-
-// ─── Constants ───────────────────────────────────────────────────────
-
-/** BPJS Kesehatan — Perpres 64/2020 */
-const BPJS_KES_RATE_COMPANY = 0.04;
-const BPJS_KES_RATE_EMPLOYEE = 0.01;
-const BPJS_KES_SALARY_CAP = 12_000_000;
-
-/** JHT — PP 46/2015 */
-const JHT_RATE_COMPANY = 0.037;
-const JHT_RATE_EMPLOYEE = 0.02;
-
-/** JKK — PP 44/2015, berdasarkan tingkat risiko */
-const JKK_RATES: Record<JkkRiskLevel, number> = {
-    1: 0.0024,  // Sangat Rendah
-    2: 0.0054,  // Rendah
-    3: 0.0089,  // Sedang
-    4: 0.0127,  // Tinggi
-    5: 0.0174,  // Sangat Tinggi
-};
-
-/** JKM — PP 44/2015 */
-const JKM_RATE = 0.003;
-
-/** JP — PP 45/2015, batas upah tertinggi 2025 */
-const JP_RATE_COMPANY = 0.02;
-const JP_RATE_EMPLOYEE = 0.01;
-const JP_SALARY_CAP = 10_547_400;
-
-/** Label tingkat risiko JKK */
-export const JKK_RISK_LABELS: Record<JkkRiskLevel, string> = {
-    1: "Sangat Rendah (0,24%)",
-    2: "Rendah (0,54%)",
-    3: "Sedang (0,89%)",
-    4: "Tinggi (1,27%)",
-    5: "Sangat Tinggi (1,74%)",
-};
+// Re-export types & helpers agar consumer lama tidak perlu diubah
+export type { JkkRiskLevel, BpjsInput, BpjsKesehatanResult, BpjsTkProgramResult, BpjsKetenagakerjaanResult, BpjsCalculationResult };
+export { JKK_RISK_LABELS } from "@/lib/constants/bpjsConstants";
 
 // ─── Core Functions ──────────────────────────────────────────────────
 
