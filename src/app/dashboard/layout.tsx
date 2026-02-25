@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
             { href: "/dashboard/payroll", label: "Payroll" },
             { href: "/dashboard/master-payroll", label: "Pengaturan Payroll" },
             { href: "/dashboard/pph21-calculator", label: "Kalkulator PPh 21" },
+            { href: "/dashboard/bpjs-calculator", label: "Kalkulator BPJS" },
         ]
     },
     { href: "/dashboard/reports", icon: FileDown, label: "Laporan" },
