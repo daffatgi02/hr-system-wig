@@ -227,3 +227,89 @@ export function exportPayslipPdf(payslip: PayslipData) {
 
     doc.save(`Slip_Gaji_${payslip.employeeId}_${payslip.period}.pdf`);
 }
+
+// ============== PDF Matrix Export ==============
+export function exportToPdfMatrix(
+    data: (string | number)[][],
+    headers: string[],
+    title: string,
+    filename: string,
+    subtitle?: string
+) {
+    const doc = new jsPDF("l", "mm", "a4");
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(128, 0, 32); // Maroon
+    doc.text("PT Wijaya Inovasi Gemilang", 15, 15);
+
+    doc.setFontSize(11);
+    doc.setTextColor(60, 60, 60);
+    doc.text(title, 15, 21);
+
+    if (subtitle) {
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 100, 100);
+        doc.text(subtitle, 15, 26);
+    }
+
+    autoTable(doc, {
+        head: [headers],
+        body: data,
+        startY: 32,
+        styles: {
+            fontSize: 5.5,
+            cellPadding: 1,
+            halign: "center",
+            valign: "middle",
+            lineColor: [220, 220, 220],
+            lineWidth: 0.1,
+            overflow: "linebreak",
+            font: "helvetica"
+        },
+        columnStyles: {
+            0: { cellWidth: 35, halign: "left", fontStyle: "bold" }, // Nama
+            1: { cellWidth: 8, halign: "center" }, // No
+            2: { cellWidth: 25, halign: "left" }, // Dept
+            // Days columns (3-33) will be auto-sized
+        },
+        headStyles: {
+            fillColor: [128, 0, 32], // Maroon
+            textColor: [255, 255, 255],
+            fontStyle: "bold",
+            fontSize: 6.5,
+            halign: "center"
+        },
+        alternateRowStyles: {
+            fillColor: [252, 252, 252]
+        },
+        theme: "grid",
+        margin: { left: 10, right: 10 },
+        didParseCell: (data) => {
+            // Highlight Sunday or specific headers if needed
+            if (data.section === "head" && !isNaN(Number(data.cell.text[0]))) {
+                data.cell.styles.fillColor = [160, 30, 60]; // Slightly lighter maroon for dates
+            }
+        }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Legend / Footer
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(120, 120, 120);
+    doc.text("* Format data di dalam kotak: Baris Atas = Jam Masuk (IN), Baris Bawah = Jam Pulang (OUT)", 15, finalY);
+
+    doc.setFontSize(6);
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")} | Halaman ${i}/${pageCount}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: "right" });
+    }
+
+    doc.save(`${filename}.pdf`);
+}

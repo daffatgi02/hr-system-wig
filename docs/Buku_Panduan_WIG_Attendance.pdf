@@ -77,7 +77,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 1 dari 14) Tj
+(Halaman 1 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -98,7 +98,7 @@ endobj
 endobj
 6 0 obj
 <<
-/Length 4217
+/Length 4234
 >>
 stream
 1.4173228346456694 w
@@ -280,7 +280,7 @@ BT
 11.5 TL
 0.157 g
 51.0236220472441033 351.4962992125983874 Td
-(   5.9. Payroll / Slip Gaji) Tj
+(   5.9. Payroll \(Slip Gaji & Rekapitulasi\)) Tj
 ET
 BT
 /F1 10 Tf
@@ -357,7 +357,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 2 dari 14) Tj
+(Halaman 2 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -539,7 +539,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 3 dari 14) Tj
+(Halaman 3 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -707,7 +707,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 4 dari 14) Tj
+(Halaman 4 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -938,7 +938,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 5 dari 14) Tj
+(Halaman 5 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -1351,7 +1351,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 6 dari 14) Tj
+(Halaman 6 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -1816,7 +1816,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 7 dari 14) Tj
+(Halaman 7 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -2099,7 +2099,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 8 dari 14) Tj
+(Halaman 8 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -2526,7 +2526,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 265.197795275590579 19.8427559055116944 Td
-(Halaman 9 dari 14) Tj
+(Halaman 9 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -2928,7 +2928,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 262.9977952755905903 19.8427559055116944 Td
-(Halaman 10 dari 14) Tj
+(Halaman 10 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -2949,7 +2949,7 @@ endobj
 endobj
 24 0 obj
 <<
-/Length 7175
+/Length 7681
 >>
 stream
 1.4173228346456694 w
@@ -3155,56 +3155,49 @@ BT
 13.7999999999999989 TL
 0.235 g
 39.6850393700787407 484.7246456692913057 Td
-(5.9. Payroll / Slip Gaji) Tj
+(5.9. Payroll \(Slip Gaji & Rekapitulasi\)) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 51.0236220472441033 464.8821259842518998 Td
-(Modul untuk menerbitkan slip gaji bulanan karyawan.) Tj
+(Modul komprehensif untuk mengelola, menerbitkan slip gaji, dan melihat) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 440.7876377952755433 Td
-(Cara Membuat Slip Gaji:) Tj
+51.0236220472441033 449.2915748031495582 Td
+(rekapitulasi payroll bulanan serta riwayat penggajian perusahaan.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 51.0236220472441033 425.1970866141731449 Td
-(1.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 425.1970866141731449 Td
-(Buka menu "Payroll".) Tj
+(A. Cara Membuat Slip Gaji:) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 51.0236220472441033 409.6065354330708033 Td
-(2.) Tj
+(1.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 68.031496062992133 409.6065354330708033 Td
-(Klik "Terbitkan Slip Gaji".) Tj
+(Buka menu "Payroll" dan pilih tab "Buat Slip Gaji".) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 51.0236220472441033 394.0159842519684616 Td
-(3.) Tj
+(2.) Tj
 ET
 BT
 /F1 10 Tf
@@ -3218,181 +3211,202 @@ BT
 11.5 TL
 0.157 g
 51.0236220472441033 378.4254330708660632 Td
-(4.) Tj
+(3.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 68.031496062992133 378.4254330708660632 Td
-(Isi komponen gaji: Gaji Pokok.) Tj
+(Isi komponen: Gaji Pokok, Tunjangan \(multiple\), dan Potongan \(multiple\).) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 51.0236220472441033 362.8348818897637216 Td
-(5.) Tj
+(4.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
 68.031496062992133 362.8348818897637216 Td
-(Tambahkan Tunjangan \(bisa multiple\): Nama tunjangan dan jumlah.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 347.24433070866138 Td
-(6.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 347.24433070866138 Td
-(Tambahkan Potongan \(bisa multiple\): Nama potongan dan jumlah.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 331.6537795275589815 Td
-(7.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 331.6537795275589815 Td
 (Masukkan nilai lembur \(jika ada\).) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 316.0632283464566399 Td
-(8.) Tj
+51.0236220472441033 347.24433070866138 Td
+(5.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-68.031496062992133 316.0632283464566399 Td
-(Gaji Bersih \(Net Salary\) dihitung otomatis.) Tj
+68.031496062992133 347.24433070866138 Td
+(Gaji Bersih \(Net Salary\) dihitung otomatis oleh sistem.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 300.4726771653542983 Td
-(9.) Tj
+51.0236220472441033 331.6537795275589815 Td
+(6.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-68.031496062992133 300.4726771653542983 Td
-(Pilih periode dan tanggal terbit.) Tj
+68.031496062992133 331.6537795275589815 Td
+(Pilih periode dan tanggal terbit lalu klik "Terbitkan".) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 284.882125984251843 Td
-(10.) Tj
+51.0236220472441033 307.559291338582625 Td
+(B. Rekapitulasi & Riwayat Payroll:) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-68.031496062992133 284.882125984251843 Td
-(Klik "Terbitkan" — slip gaji langsung muncul di portal karyawan.) Tj
+51.0236220472441033 291.9687401574802834 Td
+(•) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+62.3622047244094517 291.9687401574802834 Td
+(Rekap Payroll: Menampilkan ringkasan total gaji yang telah diproses per periode.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 276.3781889763778281 Td
+(•) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+62.3622047244094517 276.3781889763778281 Td
+(Riwayat Payroll: Menampilkan detail histori slip gaji setiap karyawan.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 260.7876377952754865 Td
+(•) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+62.3622047244094517 260.7876377952754865 Td
+(Advanced Filtering: Filter data berdasarkan Pencarian Nama, Departemen, dan Divisi.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 245.1970866141731449 Td
+(•) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+62.3622047244094517 245.1970866141731449 Td
+(Export Laporan: Dilengkapi dengan fitur Export Data ke PDF dan Excel \(.xlsx\).) Tj
 ET
 BT
 /F2 12 Tf
 13.7999999999999989 TL
 0.235 g
-39.6850393700787407 252.2837007874014716 Td
+39.6850393700787407 212.5986614173227736 Td
 (5.10. Pengaturan Komponen Payroll) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 232.4411811023621794 Td
+51.0236220472441033 192.7561417322833677 Td
 (Kelola daftar komponen tunjangan dan potongan yang dapat digunakan saat membuat slip gaji.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 216.8506299212597241 Td
+51.0236220472441033 177.1655905511810261 Td
 (•) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-62.3622047244094517 216.8506299212597241 Td
+62.3622047244094517 177.1655905511810261 Td
 (Tipe: Tunjangan \(Allowance\) atau Potongan \(Deduction\).) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 201.2600787401573825 Td
+51.0236220472441033 161.5750393700786844 Td
 (•) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-62.3622047244094517 201.2600787401573825 Td
+62.3622047244094517 161.5750393700786844 Td
 (Setiap komponen memiliki: nama, tipe, jumlah default, dan status aktif.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 185.6695275590550409 Td
+51.0236220472441033 145.9844881889763428 Td
 (•) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-62.3622047244094517 185.6695275590550409 Td
+62.3622047244094517 145.9844881889763428 Td
 (Komponen yang tidak aktif tidak muncul saat pembuatan slip gaji.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 170.0789763779526993 Td
+51.0236220472441033 130.3939370078738875 Td
 (•) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-62.3622047244094517 170.0789763779526993 Td
+62.3622047244094517 130.3939370078738875 Td
 (Contoh Tunjangan: Tunjangan Makan, Transport, Jabatan.) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-51.0236220472441033 154.4884251968503577 Td
+51.0236220472441033 114.8033858267715459 Td
 (•) Tj
 ET
 BT
 /F1 10 Tf
 11.5 TL
 0.157 g
-62.3622047244094517 154.4884251968503577 Td
+62.3622047244094517 114.8033858267715459 Td
 (Contoh Potongan: BPJS, Pinjaman, Keterlambatan.) Tj
 ET
 BT
@@ -3400,7 +3414,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 262.9977952755905903 19.8427559055116944 Td
-(Halaman 11 dari 14) Tj
+(Halaman 11 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -3421,7 +3435,7 @@ endobj
 endobj
 26 0 obj
 <<
-/Length 7586
+/Length 6434
 >>
 stream
 1.4173228346456694 w
@@ -3795,105 +3809,28 @@ BT
 11.5 TL
 0.157 g
 62.3622047244094517 229.6065354330708033 Td
+(Export Payroll — rekap histori dan rekapitulasi penggajian.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 214.0159842519684616 Td
+(•) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+62.3622047244094517 214.0159842519684616 Td
 (Format tersedia: PDF \(jsPDF\) dan Excel \(xlsx\).) Tj
-ET
-BT
-/F2 12 Tf
-13.7999999999999989 TL
-0.235 g
-39.6850393700787407 197.0081102362204319 Td
-(5.14. WIG News) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 177.1655905511810261 Td
-(Modul untuk mempublikasikan berita dan pengumuman perusahaan.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 153.0711023622046696 Td
-(Cara Membuat Berita:) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 137.480551181102328 Td
-(1.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 137.480551181102328 Td
-(Klik "Buat Berita Baru".) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 121.8899999999998727 Td
-(2.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 121.8899999999998727 Td
-(Isi: Judul, Konten, Kategori \(Pengumuman/Event/Kebijakan/Umum\).) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 106.2994488188975311 Td
-(3.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 106.2994488188975311 Td
-(Upload media/gambar \(opsional\).) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 90.7088976377951894 Td
-(4.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 90.7088976377951894 Td
-(Centang "Sematkan" jika ingin berita selalu tampil di atas.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-51.0236220472441033 75.1183464566928478 Td
-(5.) Tj
-ET
-BT
-/F1 10 Tf
-11.5 TL
-0.157 g
-68.031496062992133 75.1183464566928478 Td
-(Klik "Publikasikan".) Tj
 ET
 BT
 /F1 8 Tf
 9.1999999999999993 TL
 0.588 g
 262.9977952755905903 19.8427559055116944 Td
-(Halaman 12 dari 14) Tj
+(Halaman 12 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -3913,6 +3850,128 @@ endobj
 >>
 endobj
 28 0 obj
+<<
+/Length 1666
+>>
+stream
+1.4173228346456694 w
+0.5 0. 0. RG
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0.235 g
+39.6850393700787407 785.1970866141732586 Td
+(5.14. WIG News) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 765.3545669291338527 Td
+(Modul untuk mempublikasikan berita dan pengumuman perusahaan.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 741.2600787401574962 Td
+(Cara Membuat Berita:) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 725.6695275590550409 Td
+(1.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+68.031496062992133 725.6695275590550409 Td
+(Klik "Buat Berita Baru".) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 710.0789763779526993 Td
+(2.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+68.031496062992133 710.0789763779526993 Td
+(Isi: Judul, Konten, Kategori \(Pengumuman/Event/Kebijakan/Umum\).) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 694.4884251968503577 Td
+(3.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+68.031496062992133 694.4884251968503577 Td
+(Upload media/gambar \(opsional\).) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 678.8978740157480161 Td
+(4.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+68.031496062992133 678.8978740157480161 Td
+(Centang "Sematkan" jika ingin berita selalu tampil di atas.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+51.0236220472441033 663.3073228346456744 Td
+(5.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.157 g
+68.031496062992133 663.3073228346456744 Td
+(Klik "Publikasikan".) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.588 g
+262.9977952755905903 19.8427559055116944 Td
+(Halaman 13 dari 15) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.588 g
+210.077795275590546 8.5041732283463034 Td
+(PT Wijaya Inovasi Gemilang — Dokumen Internal) Tj
+ET
+endstream
+endobj
+29 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 30 0 R
+>>
+endobj
+30 0 obj
 <<
 /Length 4190
 >>
@@ -4145,7 +4204,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 262.9977952755905903 19.8427559055116944 Td
-(Halaman 13 dari 14) Tj
+(Halaman 14 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -4156,15 +4215,15 @@ BT
 ET
 endstream
 endobj
-29 0 obj
+31 0 obj
 <</Type /Page
 /Parent 1 0 R
 /Resources 2 0 R
 /MediaBox [0 0 595.2799999999999727 841.8899999999999864]
-/Contents 30 0 R
+/Contents 32 0 R
 >>
 endobj
-30 0 obj
+32 0 obj
 <<
 /Length 2903
 >>
@@ -4289,7 +4348,7 @@ BT
 9.1999999999999993 TL
 0.588 g
 262.9977952755905903 19.8427559055116944 Td
-(Halaman 14 dari 14) Tj
+(Halaman 15 dari 15) Tj
 ET
 BT
 /F1 8 Tf
@@ -4302,11 +4361,11 @@ endstream
 endobj
 1 0 obj
 <</Type /Pages
-/Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R 27 0 R 29 0 R ]
-/Count 14
+/Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R 27 0 R 29 0 R 31 0 R ]
+/Count 15
 >>
 endobj
-31 0 obj
+33 0 obj
 <<
 /Type /Font
 /BaseFont /Helvetica
@@ -4316,7 +4375,7 @@ endobj
 /LastChar 255
 >>
 endobj
-32 0 obj
+34 0 obj
 <<
 /Type /Font
 /BaseFont /Helvetica-Bold
@@ -4326,7 +4385,7 @@ endobj
 /LastChar 255
 >>
 endobj
-33 0 obj
+35 0 obj
 <<
 /Type /Font
 /BaseFont /Helvetica-Oblique
@@ -4336,7 +4395,7 @@ endobj
 /LastChar 255
 >>
 endobj
-34 0 obj
+36 0 obj
 <<
 /Type /Font
 /BaseFont /Helvetica-BoldOblique
@@ -4346,7 +4405,7 @@ endobj
 /LastChar 255
 >>
 endobj
-35 0 obj
+37 0 obj
 <<
 /Type /Font
 /BaseFont /Courier
@@ -4356,7 +4415,7 @@ endobj
 /LastChar 255
 >>
 endobj
-36 0 obj
+38 0 obj
 <<
 /Type /Font
 /BaseFont /Courier-Bold
@@ -4366,7 +4425,7 @@ endobj
 /LastChar 255
 >>
 endobj
-37 0 obj
+39 0 obj
 <<
 /Type /Font
 /BaseFont /Courier-Oblique
@@ -4376,7 +4435,7 @@ endobj
 /LastChar 255
 >>
 endobj
-38 0 obj
+40 0 obj
 <<
 /Type /Font
 /BaseFont /Courier-BoldOblique
@@ -4386,7 +4445,7 @@ endobj
 /LastChar 255
 >>
 endobj
-39 0 obj
+41 0 obj
 <<
 /Type /Font
 /BaseFont /Times-Roman
@@ -4396,7 +4455,7 @@ endobj
 /LastChar 255
 >>
 endobj
-40 0 obj
+42 0 obj
 <<
 /Type /Font
 /BaseFont /Times-Bold
@@ -4406,7 +4465,7 @@ endobj
 /LastChar 255
 >>
 endobj
-41 0 obj
+43 0 obj
 <<
 /Type /Font
 /BaseFont /Times-Italic
@@ -4416,7 +4475,7 @@ endobj
 /LastChar 255
 >>
 endobj
-42 0 obj
+44 0 obj
 <<
 /Type /Font
 /BaseFont /Times-BoldItalic
@@ -4426,7 +4485,7 @@ endobj
 /LastChar 255
 >>
 endobj
-43 0 obj
+45 0 obj
 <<
 /Type /Font
 /BaseFont /ZapfDingbats
@@ -4435,7 +4494,7 @@ endobj
 /LastChar 255
 >>
 endobj
-44 0 obj
+46 0 obj
 <<
 /Type /Font
 /BaseFont /Symbol
@@ -4448,32 +4507,32 @@ endobj
 <<
 /ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
 /Font <<
-/F1 31 0 R
-/F2 32 0 R
-/F3 33 0 R
-/F4 34 0 R
-/F5 35 0 R
-/F6 36 0 R
-/F7 37 0 R
-/F8 38 0 R
-/F9 39 0 R
-/F10 40 0 R
-/F11 41 0 R
-/F12 42 0 R
-/F13 43 0 R
-/F14 44 0 R
+/F1 33 0 R
+/F2 34 0 R
+/F3 35 0 R
+/F4 36 0 R
+/F5 37 0 R
+/F6 38 0 R
+/F7 39 0 R
+/F8 40 0 R
+/F9 41 0 R
+/F10 42 0 R
+/F11 43 0 R
+/F12 44 0 R
+/F13 45 0 R
+/F14 46 0 R
 >>
 /XObject <<
 >>
 >>
 endobj
-45 0 obj
+47 0 obj
 <<
 /Producer (jsPDF 4.1.0)
-/CreationDate (D:20260225114152+07'00')
+/CreationDate (D:20260226130718+07'00')
 >>
 endobj
-46 0 obj
+48 0 obj
 <<
 /Type /Catalog
 /Pages 1 0 R
@@ -4482,61 +4541,63 @@ endobj
 >>
 endobj
 xref
-0 47
+0 49
 0000000000 65535 f 
-0000070207 00000 n 
-0000072118 00000 n 
+0000071436 00000 n 
+0000073354 00000 n 
 0000000015 00000 n 
 0000000152 00000 n 
 0000001455 00000 n 
 0000001592 00000 n 
-0000005861 00000 n 
-0000005998 00000 n 
-0000009111 00000 n 
-0000009249 00000 n 
-0000011756 00000 n 
-0000011895 00000 n 
-0000015622 00000 n 
-0000015761 00000 n 
-0000022420 00000 n 
-0000022559 00000 n 
-0000029693 00000 n 
-0000029832 00000 n 
-0000034015 00000 n 
-0000034154 00000 n 
-0000041156 00000 n 
-0000041295 00000 n 
-0000047585 00000 n 
-0000047724 00000 n 
-0000054952 00000 n 
-0000055091 00000 n 
-0000062730 00000 n 
-0000062869 00000 n 
-0000067112 00000 n 
-0000067251 00000 n 
-0000070353 00000 n 
-0000070479 00000 n 
-0000070610 00000 n 
-0000070744 00000 n 
-0000070882 00000 n 
-0000071006 00000 n 
-0000071135 00000 n 
-0000071267 00000 n 
-0000071403 00000 n 
-0000071531 00000 n 
-0000071658 00000 n 
-0000071787 00000 n 
-0000071920 00000 n 
-0000072022 00000 n 
+0000005878 00000 n 
+0000006015 00000 n 
+0000009128 00000 n 
+0000009266 00000 n 
+0000011773 00000 n 
+0000011912 00000 n 
+0000015639 00000 n 
+0000015778 00000 n 
+0000022437 00000 n 
+0000022576 00000 n 
+0000029710 00000 n 
+0000029849 00000 n 
+0000034032 00000 n 
+0000034171 00000 n 
+0000041173 00000 n 
+0000041312 00000 n 
+0000047602 00000 n 
+0000047741 00000 n 
+0000055475 00000 n 
+0000055614 00000 n 
+0000062101 00000 n 
+0000062240 00000 n 
+0000063959 00000 n 
+0000064098 00000 n 
+0000068341 00000 n 
+0000068480 00000 n 
+0000071589 00000 n 
+0000071715 00000 n 
+0000071846 00000 n 
+0000071980 00000 n 
+0000072118 00000 n 
+0000072242 00000 n 
 0000072371 00000 n 
-0000072457 00000 n 
+0000072503 00000 n 
+0000072639 00000 n 
+0000072767 00000 n 
+0000072894 00000 n 
+0000073023 00000 n 
+0000073156 00000 n 
+0000073258 00000 n 
+0000073607 00000 n 
+0000073693 00000 n 
 trailer
 <<
-/Size 47
-/Root 46 0 R
-/Info 45 0 R
-/ID [ <56896CAF85EB1CAB1BF954CA80CE28B0> <56896CAF85EB1CAB1BF954CA80CE28B0> ]
+/Size 49
+/Root 48 0 R
+/Info 47 0 R
+/ID [ <51DF8FA9299EBD5E5FBC2BE9D966C8F7> <51DF8FA9299EBD5E5FBC2BE9D966C8F7> ]
 >>
 startxref
-72561
+73797
 %%EOF

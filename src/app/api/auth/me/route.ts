@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getEmployeeById } from "@/lib/services/employeeService";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
+import { unauthorizedResponse } from "@/lib/middleware/apiGuard";
+import { NextRequest } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
     const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     const employee = await getEmployeeById(session.id);
     if (!employee) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
+        return NextResponse.json(
+            { error: "Data pengguna tidak ditemukan" },
+            { status: 404 }
+        );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, faceDescriptor, ...safeEmployee } = employee;
+    const { password: _pw, faceDescriptor: _fd, ...safeEmployee } = employee;
     return NextResponse.json(safeEmployee);
 }

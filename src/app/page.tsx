@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { User, Lock, LogIn, Loader2, KeyRound } from "lucide-react";
@@ -11,11 +11,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
   const isSubmitting = useRef(false);
+
+  // Cooldown timer effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting.current) return;
+    if (isSubmitting.current || cooldown > 0) return;
     isSubmitting.current = true;
     setLoading(true);
     setError("");
@@ -31,11 +44,22 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login gagal");
+        const nextFailed = failedAttempts + 1;
+        setFailedAttempts(nextFailed);
+
+        if (nextFailed >= 5) {
+          setCooldown(30);
+          setError("Terlalu banyak percobaan gagal. Silakan tunggu 30 detik.");
+        } else {
+          setError(data.error || "Login gagal");
+        }
+
         setLoading(false);
         isSubmitting.current = false;
         return;
       }
+
+      setFailedAttempts(0);
 
       // Small delay to ensure cookie is properly set before navigation
       await new Promise((r) => setTimeout(r, 200));
@@ -126,10 +150,12 @@ export default function LoginPage() {
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--primary)] text-white font-semibold rounded-lg hover:bg-[var(--primary-light,#9B1B30)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-              disabled={loading}
+              disabled={loading || cooldown > 0}
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
+              ) : cooldown > 0 ? (
+                <>Tunggu {cooldown}s</>
               ) : (
                 <>
                   <LogIn className="w-4 h-4" />

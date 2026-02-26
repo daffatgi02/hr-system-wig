@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireAuth, unauthorizedResponse, forbiddenResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import {
     getVisitReports,
     getVisitReportById,
@@ -7,155 +8,142 @@ import {
     updateVisitReport,
     deleteVisitReport,
 } from "@/lib/services/visitService";
+import { visitCreateSchema, visitUpdateSchema } from "@/lib/validations/validationSchemas";
+import logger from "@/lib/logger";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
     try {
-        const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        // HR sees all visits, employee only their own
         const visits = await getVisitReports(
             session.role === "hr" ? undefined : session.employeeId
         );
         return NextResponse.json(visits);
-    } catch {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("VisitsGET", err);
     }
 }
 
 export async function POST(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
     try {
-        const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const body = await request.json();
-        const { clientName, clientAddress, purpose, result, location, photo, notes } = body;
-
-        if (!clientName || !clientAddress || !purpose) {
-            return NextResponse.json(
-                { error: "Nama klien, alamat, dan tujuan harus diisi" },
-                { status: 400 }
-            );
-        }
+        const result = await validateBody(request, visitCreateSchema);
+        if ("error" in result) return result.error;
+        const body = result.data;
 
         const visit = await createVisitReport({
+            ...body,
             employeeId: session.employeeId,
             date: new Date().toISOString().split("T")[0],
-            clientName,
-            clientAddress,
-            purpose,
-            result: result || null,
-            location: location || null,
-            photo: photo || null,
             status: "pending",
-            notes: notes || null,
             createdAt: new Date().toISOString(),
         });
 
+        logger.info("Visit report created", { employeeId: session.employeeId, visitId: visit.id });
         return NextResponse.json(visit, { status: 201 });
-    } catch {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("VisitsPOST", err);
     }
 }
 
 export async function PUT(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
     try {
-        const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const result = await validateBody(request, visitUpdateSchema);
+        if ("error" in result) return result.error;
+        const { id, status, notes, ...data } = result.data;
 
-        const body = await request.json();
-        const { id, status, notes, clientName, clientAddress, purpose, result } = body;
-
-        if (!id) {
-            return NextResponse.json({ error: "ID harus diisi" }, { status: 400 });
-        }
-
-        // Verify ownership or HR role
         const existing = await getVisitReportById(id);
         if (!existing) {
-            return NextResponse.json({ error: "Kunjungan tidak ditemukan" }, { status: 404 });
+            return NextResponse.json({ error: "Laporan kunjungan tidak ditemukan." }, { status: 404 });
         }
 
-        // Only HR can update status
-        if (status && session.role !== "hr") {
-            return NextResponse.json(
-                { error: "Hanya HR yang dapat mengubah status" },
-                { status: 403 }
-            );
+        // Only HR can update status and admin notes
+        if ((status !== undefined || notes !== undefined) && session.role !== "hr") {
+            return forbiddenResponse();
         }
 
         // Employees can only edit their own pending visits
         if (session.role !== "hr") {
             if (existing.employeeId !== session.employeeId) {
-                return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
+                return forbiddenResponse();
             }
             if (existing.status !== "pending") {
                 return NextResponse.json(
-                    { error: "Tidak dapat mengedit kunjungan yang sudah diproses" },
+                    { error: "Tidak dapat mengubah laporan yang sudah diproses oleh HR." },
                     { status: 400 }
                 );
             }
         }
 
-        // Build safe update data
-        const updateData: Record<string, unknown> = {};
+        const updateData: Record<string, unknown> = { ...data };
         if (session.role === "hr") {
             if (status !== undefined) updateData.status = status;
             if (notes !== undefined) updateData.notes = notes;
         }
-        if (clientName !== undefined) updateData.clientName = clientName;
-        if (clientAddress !== undefined) updateData.clientAddress = clientAddress;
-        if (purpose !== undefined) updateData.purpose = purpose;
-        if (result !== undefined) updateData.result = result;
 
         const updated = await updateVisitReport(id, updateData);
         if (!updated) {
-            return NextResponse.json({ error: "Gagal mengupdate" }, { status: 404 });
+            return NextResponse.json({ error: "Gagal memperbarui laporan kunjungan." }, { status: 404 });
         }
 
+        logger.info("Visit report updated", { visitId: id, updatedBy: session.employeeId });
         return NextResponse.json(updated);
-    } catch {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("VisitsPUT", err);
     }
 }
 
 export async function DELETE(request: NextRequest) {
-    try {
-        const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
+    try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get("id");
 
         if (!id) {
-            return NextResponse.json({ error: "ID harus diisi" }, { status: 400 });
+            return NextResponse.json({ error: "ID laporan diperlukan." }, { status: 400 });
         }
 
-        // Verify ownership or HR role
         const existing = await getVisitReportById(id);
         if (!existing) {
-            return NextResponse.json({ error: "Kunjungan tidak ditemukan" }, { status: 404 });
+            return NextResponse.json({ error: "Laporan kunjungan tidak ditemukan." }, { status: 404 });
         }
 
         if (session.role !== "hr" && existing.employeeId !== session.employeeId) {
-            return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
+            return forbiddenResponse();
+        }
+
+        if (session.role !== "hr" && existing.status !== "pending") {
+            return NextResponse.json({ error: "Tidak dapat menghapus laporan yang sudah diproses." }, { status: 400 });
         }
 
         const deleted = await deleteVisitReport(id);
         if (!deleted) {
-            return NextResponse.json({ error: "Gagal menghapus" }, { status: 404 });
+            return NextResponse.json({ error: "Gagal menghapus laporan kunjungan." }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true });
-    } catch {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        logger.info("Visit report deleted", { visitId: id, deletedBy: session.employeeId });
+        return NextResponse.json({ success: true, message: "Laporan kunjungan berhasil dihapus." });
+    } catch (err) {
+        return serverErrorResponse("VisitsDELETE", err);
     }
 }

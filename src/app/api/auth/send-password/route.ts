@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getEmployeeByEmployeeId, updateEmployee } from "@/lib/services/employeeService";
 import { sendPasswordEmail } from "@/lib/services/emailService";
+import { checkSensitiveRateLimit } from "@/lib/middleware/rateLimit";
+import { unauthorizedResponse, forbiddenResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { sendPasswordSchema } from "@/lib/validations/validationSchemas";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 
@@ -16,25 +19,23 @@ function generatePassword(): string {
 }
 
 export async function POST(request: NextRequest) {
+    const rateLimited = checkSensitiveRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
     try {
         const session = await getSession();
-        if (!session || session.role !== "hr") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
+        if (!session) return unauthorizedResponse();
+        if (session.role !== "hr") return forbiddenResponse();
 
-        const { employeeId } = await request.json();
+        const result = await validateBody(request, sendPasswordSchema);
+        if ("error" in result) return result.error;
 
-        if (!employeeId) {
-            return NextResponse.json(
-                { error: "Employee ID harus diisi" },
-                { status: 400 }
-            );
-        }
+        const { employeeId } = result.data;
 
         const employee = await getEmployeeByEmployeeId(employeeId);
         if (!employee) {
             return NextResponse.json(
-                { error: "Karyawan tidak ditemukan" },
+                { error: "Data karyawan tidak ditemukan" },
                 { status: 404 }
             );
         }
@@ -48,19 +49,16 @@ export async function POST(request: NextRequest) {
 
         if (!employee.email) {
             return NextResponse.json(
-                { error: "Karyawan tidak memiliki email" },
+                { error: "Karyawan tidak memiliki alamat email" },
                 { status: 400 }
             );
         }
 
-        // Generate random password
         const plainPassword = generatePassword();
-        const hashedPassword = await bcrypt.hash(plainPassword, 10);
+        const hashedPassword = await bcrypt.hash(plainPassword, 12);
 
-        // Update employee password
         await updateEmployee(employee.id, { password: hashedPassword });
 
-        // Send email
         const emailSent = await sendPasswordEmail(
             employee.email,
             employee.name,
@@ -72,12 +70,9 @@ export async function POST(request: NextRequest) {
             emailSent,
             message: emailSent
                 ? `Password berhasil dikirim ke ${employee.email}`
-                : `Password berhasil diupdate tapi email gagal terkirim. Cek konfigurasi SMTP.`,
+                : "Password berhasil diperbarui. Email gagal terkirim, periksa konfigurasi SMTP.",
         });
-    } catch {
-        return NextResponse.json(
-            { error: "Server error" },
-            { status: 500 }
-        );
+    } catch (err) {
+        return serverErrorResponse("SendPassword", err);
     }
 }

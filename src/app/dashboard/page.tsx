@@ -83,6 +83,16 @@ export default function DashboardPage() {
     const weeklyData = analytics?.weeklyAttendance || [];
     const maxChartVal = Math.max(...weeklyData.map((d) => d.present + d.late + d.absent), 1);
 
+    const ITEMS_PER_PAGE = 5;
+    const [activityPage, setActivityPage] = useState(1);
+    const [leavePage, setLeavePage] = useState(1);
+
+    const currentActivities = analytics?.recentActivity?.slice((activityPage - 1) * ITEMS_PER_PAGE, activityPage * ITEMS_PER_PAGE) || [];
+    const totalActivityPages = Math.ceil((analytics?.recentActivity?.length || 0) / ITEMS_PER_PAGE);
+
+    const currentPendingLeaves = pendingLeaves.slice((leavePage - 1) * ITEMS_PER_PAGE, leavePage * ITEMS_PER_PAGE);
+    const totalLeavePages = Math.ceil(pendingLeaves.length / ITEMS_PER_PAGE);
+
     return (
         <div className="space-y-6 animate-[fadeIn_0.5s_ease]">
             {/* Header */}
@@ -175,13 +185,13 @@ export default function DashboardPage() {
             </div>
 
             {/* Weekly Attendance Chart + Department Stats */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
                 {/* Weekly Attendance Chart */}
-                <div className="lg:col-span-3 space-y-3">
-                    <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-[var(--primary)]" /> Kehadiran 7 Hari Terakhir
+                <div className="lg:col-span-3 flex flex-col gap-3">
+                    <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-[#800020]" /> Kehadiran 7 Hari Terakhir
                     </h2>
-                    <div className="card p-5">
+                    <div className="card p-5 flex-1 flex flex-col">
                         {weeklyData.length === 0 ? (
                             <div className="p-8 text-center">
                                 <BarChart3 className="w-8 h-8 text-[var(--text-muted)] opacity-30 mx-auto mb-2" />
@@ -220,11 +230,11 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Department Stats */}
-                <div className="lg:col-span-2 space-y-3">
-                    <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                        <Users className="w-4 h-4 text-[var(--primary)]" /> Per Departemen
+                <div className="lg:col-span-2 flex flex-col gap-3">
+                    <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#800020]" /> Kehadiran Per Departemen
                     </h2>
-                    <div className="card divide-y divide-[var(--border)]">
+                    <div className="card flex-1 divide-y divide-[var(--border)] overflow-y-auto min-h-[200px]">
                         {!analytics?.departmentStats?.length ? (
                             <div className="p-8 text-center">
                                 <Users className="w-8 h-8 text-[var(--text-muted)] opacity-30 mx-auto mb-2" />
@@ -250,95 +260,113 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                 {/* Recent Activity Feed */}
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-[var(--primary)]" /> Aktivitas Terbaru
+                        <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-[#800020]" /> Aktivitas Terbaru
                         </h2>
                     </div>
-                    <div className="card overflow-hidden">
+                    <div className="card flex-1 flex flex-col overflow-hidden">
                         {!analytics?.recentActivity?.length ? (
-                            <div className="p-8 text-center">
+                            <div className="p-8 text-center flex-1 flex flex-col justify-center">
                                 <Activity className="w-8 h-8 text-[var(--text-muted)] opacity-30 mx-auto mb-2" />
                                 <p className="text-xs text-[var(--text-muted)]">Belum ada aktivitas</p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-[var(--border)]">
-                                {analytics.recentActivity.map((act, i) => (
-                                    <div key={i} className="p-3 flex items-start gap-3">
-                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${act.type === "leave" ? "bg-orange-100 text-orange-600" : act.type === "visit" ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600"}`}>
-                                            {act.type === "leave" ? <CalendarOff className="w-3.5 h-3.5" /> : act.type === "visit" ? <MapPinned className="w-3.5 h-3.5" /> : <Clock4 className="w-3.5 h-3.5" />}
+                            <>
+                                <div className="divide-y divide-[var(--border)] flex-1">
+                                    {currentActivities.map((act, i) => (
+                                        <div key={i} className="p-3 flex items-start gap-3">
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${act.type === "leave" ? "bg-orange-100 text-orange-600" : act.type === "visit" ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600"}`}>
+                                                {act.type === "leave" ? <CalendarOff className="w-3.5 h-3.5" /> : act.type === "visit" ? <MapPinned className="w-3.5 h-3.5" /> : <Clock4 className="w-3.5 h-3.5" />}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-[var(--text-secondary)]">{act.message}</p>
+                                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{new Date(act.time).toLocaleDateString("id-ID")}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-[var(--text-secondary)]">{act.message}</p>
-                                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{new Date(act.time).toLocaleDateString("id-ID")}</p>
-                                        </div>
+                                    ))}
+                                </div>
+                                {totalActivityPages > 1 && (
+                                    <div className="p-2 border-t border-[var(--border)] flex justify-between items-center bg-slate-50/50 mt-auto">
+                                        <button onClick={() => setActivityPage(Math.max(1, activityPage - 1))} disabled={activityPage === 1} className="text-[10px] font-bold px-2.5 py-1.5 text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors">Prev</button>
+                                        <span className="text-[10px] text-gray-500 font-medium">Hal {activityPage} / {totalActivityPages}</span>
+                                        <button onClick={() => setActivityPage(Math.min(totalActivityPages, activityPage + 1))} disabled={activityPage === totalActivityPages} className="text-[10px] font-bold px-2.5 py-1.5 text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors">Next</button>
                                     </div>
-                                ))}
-                            </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
 
                 {/* Pending Leave Requests */}
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                            <CalendarOff className="w-4 h-4 text-orange-500" /> Pengajuan Cuti Pending
+                        <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                            <CalendarOff className="w-4 h-4 text-[#ea580c]" /> Pengajuan Cuti Pending
                         </h2>
-                        <button onClick={() => router.push("/dashboard/leave")} className="text-xs font-medium text-[var(--primary)] flex items-center gap-1 hover:underline">
+                        <button onClick={() => router.push("/dashboard/leave")} className="text-[10px] font-bold text-[#800020] flex items-center gap-1 hover:underline">
                             Kelola <ArrowRight className="w-3 h-3" />
                         </button>
                     </div>
-                    <div className="card overflow-hidden">
+                    <div className="card flex-1 flex flex-col overflow-hidden">
                         {pendingLeaves.length === 0 ? (
-                            <div className="p-8 text-center">
+                            <div className="p-8 text-center flex-1 flex flex-col justify-center">
                                 <CalendarOff className="w-8 h-8 text-[var(--text-muted)] opacity-30 mx-auto mb-2" />
                                 <p className="text-xs text-[var(--text-muted)]">Tidak ada pengajuan cuti pending</p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-[var(--border)]">
-                                {pendingLeaves.slice(0, 5).map((l) => (
-                                    <div key={l.id} className="p-3 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xs font-bold">
-                                                {getEmployeeName(l.employeeId).charAt(0)}
+                            <>
+                                <div className="divide-y divide-[var(--border)] flex-1">
+                                    {currentPendingLeaves.map((l) => (
+                                        <div key={l.id} className="p-3 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xs font-bold">
+                                                    {getEmployeeName(l.employeeId).charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-[var(--text-primary)]">{getEmployeeName(l.employeeId)}</p>
+                                                    <p className="text-[10px] text-[var(--text-muted)]">{l.type} • {l.startDate} — {l.endDate}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-[var(--text-primary)]">{getEmployeeName(l.employeeId)}</p>
-                                                <p className="text-[10px] text-[var(--text-muted)]">{l.type} • {l.startDate} — {l.endDate}</p>
-                                            </div>
+                                            <span className="badge badge-warning">Pending</span>
                                         </div>
-                                        <span className="badge badge-warning">Pending</span>
+                                    ))}
+                                </div>
+                                {totalLeavePages > 1 && (
+                                    <div className="p-2 border-t border-[var(--border)] flex justify-between items-center bg-slate-50/50 mt-auto">
+                                        <button onClick={() => setLeavePage(Math.max(1, leavePage - 1))} disabled={leavePage === 1} className="text-[10px] font-bold px-2.5 py-1.5 text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors">Prev</button>
+                                        <span className="text-[10px] text-gray-500 font-medium">Hal {leavePage} / {totalLeavePages}</span>
+                                        <button onClick={() => setLeavePage(Math.min(totalLeavePages, leavePage + 1))} disabled={leavePage === totalLeavePages} className="text-[10px] font-bold px-2.5 py-1.5 text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors">Next</button>
                                     </div>
-                                ))}
-                            </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                 {/* Today's Attendance */}
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                            <ClipboardList className="w-4 h-4 text-green-500" /> Absensi Hari Ini
+                        <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4 text-[#16a34a]" /> Absensi Hari Ini
                         </h2>
-                        <button onClick={() => router.push("/dashboard/attendance")} className="text-xs font-medium text-[var(--primary)] flex items-center gap-1 hover:underline">
+                        <button onClick={() => router.push("/dashboard/attendance")} className="text-[10px] font-bold text-[#800020] flex items-center gap-1 hover:underline">
                             Detail <ArrowRight className="w-3 h-3" />
                         </button>
                     </div>
-                    <div className="card overflow-hidden">
+                    <div className="card flex-1 flex flex-col overflow-hidden">
                         {todayAttendance.length === 0 ? (
-                            <div className="p-8 text-center">
+                            <div className="p-8 text-center flex-1 flex flex-col justify-center">
                                 <ClipboardList className="w-8 h-8 text-[var(--text-muted)] opacity-30 mx-auto mb-2" />
                                 <p className="text-xs text-[var(--text-muted)]">Belum ada kehadiran hari ini</p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-[var(--border)]">
+                            <div className="divide-y divide-[var(--border)] flex-1 overflow-y-auto min-h-[150px]">
                                 {todayAttendance.slice(0, 5).map((a, i) => (
                                     <div key={i} className="p-3 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -364,22 +392,22 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Not Yet Present */}
-                <div className="space-y-3">
-                    <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                        <UserX className="w-4 h-4 text-red-500" /> Belum Hadir Hari Ini
+                <div className="flex flex-col gap-3">
+                    <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                        <UserX className="w-4 h-4 text-[#ef4444]" /> Belum Hadir Hari Ini
                     </h2>
-                    <div className="card">
+                    <div className="card flex-1 flex flex-col">
                         {(() => {
                             const presentIds = new Set(todayAttendance.map((a) => a.employeeId));
                             const absent = activeEmps.filter((e) => !presentIds.has(e.employeeId));
                             if (absent.length === 0) return (
-                                <div className="p-8 text-center">
-                                    <UserCheck className="w-8 h-8 text-green-500 opacity-30 mx-auto mb-2" />
+                                <div className="p-8 text-center flex-1 flex flex-col justify-center">
+                                    <UserCheck className="w-8 h-8 text-[#16a34a] opacity-30 mx-auto mb-2" />
                                     <p className="text-xs text-[var(--text-muted)]">Semua karyawan sudah hadir 🎉</p>
                                 </div>
                             );
                             return (
-                                <div className="divide-y divide-[var(--border)]">
+                                <div className="divide-y divide-[var(--border)] flex-1 overflow-y-auto min-h-[150px]">
                                     {absent.slice(0, 5).map((e) => (
                                         <div key={e.id} className="p-3 flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs font-bold">
@@ -400,41 +428,43 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent News & Employee Table */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                 {/* Recent News */}
-                <div className="space-y-3">
-                    <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                        <Megaphone className="w-4 h-4 text-[var(--primary)]" /> Berita Terbaru
+                <div className="flex flex-col gap-3">
+                    <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                        <Megaphone className="w-4 h-4 text-[#800020]" /> Berita Terbaru
                     </h2>
-                    <div className="card divide-y divide-[var(--border)]">
+                    <div className="card flex-1 divide-y divide-[var(--border)] flex flex-col overflow-hidden">
                         {news.length === 0 ? (
-                            <div className="p-8 text-center">
+                            <div className="p-8 text-center flex-1 flex flex-col justify-center">
                                 <Megaphone className="w-8 h-8 text-[var(--text-muted)] opacity-30 mx-auto mb-2" />
                                 <p className="text-xs text-[var(--text-muted)]">Belum ada berita</p>
                             </div>
                         ) : (
-                            news.slice(0, 3).map((n) => (
-                                <div key={n.id} className="p-3">
-                                    <p className="text-sm font-medium text-[var(--text-primary)]">{n.title}</p>
-                                    <p className="text-[10px] text-[var(--text-muted)] mt-1">{n.category} • {new Date(n.createdAt).toLocaleDateString("id-ID")}</p>
-                                </div>
-                            ))
+                            <div className="flex-1 overflow-y-auto min-h-[150px]">
+                                {news.slice(0, 3).map((n) => (
+                                    <div key={n.id} className="p-3">
+                                        <p className="text-sm font-medium text-[var(--text-primary)]">{n.title}</p>
+                                        <p className="text-[10px] text-[var(--text-muted)] mt-1">{n.category} • {new Date(n.createdAt).toLocaleDateString("id-ID")}</p>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
 
                 {/* Employee Overview (compact) */}
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                            <Users className="w-4 h-4 text-[var(--primary)]" /> Data Karyawan
+                        <h2 className="text-[12px] font-bold text-[#800020] uppercase tracking-wider flex items-center gap-2">
+                            <Users className="w-4 h-4 text-[#800020]" /> Data Karyawan
                         </h2>
-                        <button onClick={() => router.push("/dashboard/employees")} className="text-xs font-medium text-[var(--primary)] flex items-center gap-1 hover:underline">
+                        <button onClick={() => router.push("/dashboard/employees")} className="text-[10px] font-bold text-[#800020] flex items-center gap-1 hover:underline">
                             Lihat Semua <ArrowRight className="w-3 h-3" />
                         </button>
                     </div>
-                    <div className="card overflow-hidden">
-                        <div className="overflow-x-auto">
+                    <div className="card flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-x-auto flex-1">
                             <table className="data-table">
                                 <thead>
                                     <tr>

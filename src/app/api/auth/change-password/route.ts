@@ -1,40 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getEmployeeByEmployeeId, updateEmployee } from "@/lib/services/employeeService";
+import { checkSensitiveRateLimit } from "@/lib/middleware/rateLimit";
+import { unauthorizedResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { changePasswordSchema } from "@/lib/validations/validationSchemas";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
+    const rateLimited = checkSensitiveRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
     try {
         const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        if (!session) return unauthorizedResponse();
 
-        const { currentPassword, newPassword } = await request.json();
+        const result = await validateBody(request, changePasswordSchema);
+        if ("error" in result) return result.error;
 
-        if (!currentPassword || !newPassword) {
-            return NextResponse.json(
-                { error: "Password saat ini dan password baru harus diisi" },
-                { status: 400 }
-            );
-        }
-
-        if (newPassword.length < 8) {
-            return NextResponse.json(
-                { error: "Password baru minimal 8 karakter" },
-                { status: 400 }
-            );
-        }
+        const { currentPassword, newPassword } = result.data;
 
         const employee = await getEmployeeByEmployeeId(session.employeeId);
         if (!employee) {
             return NextResponse.json(
-                { error: "Karyawan tidak ditemukan" },
+                { error: "Data karyawan tidak ditemukan" },
                 { status: 404 }
             );
         }
 
-        // Verify current password
         const isValid = await bcrypt.compare(currentPassword, employee.password);
         if (!isValid) {
             return NextResponse.json(
@@ -43,18 +35,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Hash and update new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
         await updateEmployee(employee.id, { password: hashedPassword });
 
         return NextResponse.json({
             success: true,
             message: "Password berhasil diubah",
         });
-    } catch {
-        return NextResponse.json(
-            { error: "Server error" },
-            { status: 500 }
-        );
+    } catch (err) {
+        return serverErrorResponse("ChangePassword", err);
     }
 }

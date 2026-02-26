@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireAuth, unauthorizedResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import {
     getAttendanceRecords,
     getAttendanceByDate,
@@ -8,40 +9,51 @@ import {
 } from "@/lib/services/attendanceService";
 import { prisma } from "@/lib/prisma";
 import { calculateDistance } from "@/lib/utils";
+import { attendanceSchema } from "@/lib/validations/validationSchemas";
+import logger from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
-    const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
-    const { searchParams } = new URL(request.url);
-    const employeeId = searchParams.get("employeeId");
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
 
-    if (session.role === "hr") {
-        const records = await getAttendanceRecords(employeeId || undefined);
+    try {
+        const { searchParams } = new URL(request.url);
+        const employeeId = searchParams.get("employeeId");
+
+        if (session.role === "hr") {
+            const records = await getAttendanceRecords(employeeId || undefined);
+            return NextResponse.json(records);
+        }
+
+        const records = await getAttendanceRecords(session.employeeId);
         return NextResponse.json(records);
+    } catch (err) {
+        return serverErrorResponse("AttendanceGET", err);
     }
-
-    const records = await getAttendanceRecords(session.employeeId);
-    return NextResponse.json(records);
 }
 
 export async function POST(request: NextRequest) {
-    const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
 
     try {
-        const body = await request.json();
+        const result = await validateBody(request, attendanceSchema);
+        if ("error" in result) return result.error;
+        const body = result.data;
+
         const today = new Date().toISOString().split("T")[0];
 
-        // Fetch employee settings
+        // Fetch employee settings with proper typing
         const employee = await prisma.employee.findUnique({
             where: { employeeId: session.employeeId },
             include: { locations: true }
-        }) as any;
+        });
 
         if (!employee) {
             return NextResponse.json({ error: "Data karyawan tidak ditemukan" }, { status: 404 });
@@ -50,17 +62,17 @@ export async function POST(request: NextRequest) {
         // Location verification logic
         if (!employee.bypassLocation) {
             if (!body.location || typeof body.location.lat !== "number" || typeof body.location.lng !== "number") {
-                return NextResponse.json({ error: "Akses lokasi diperlukan untuk absensi" }, { status: 400 });
+                return NextResponse.json({ error: "Akses lokasi diperlukan untuk melakukan absensi." }, { status: 400 });
             }
 
-            if (employee.locations.length === 0) {
-                return NextResponse.json({ error: "Lokasi absensi Anda belum diatur oleh HR" }, { status: 403 });
+            if (!employee.locations || employee.locations.length === 0) {
+                return NextResponse.json({ error: "Lokasi absensi Anda belum diatur oleh HR. Silakan hubungi admin." }, { status: 403 });
             }
 
-            const isWithinRange = employee.locations.some((loc: any) => {
+            const isWithinRange = employee.locations.some((loc) => {
                 const dist = calculateDistance(
-                    body.location.lat,
-                    body.location.lng,
+                    body.location!.lat,
+                    body.location!.lng,
                     loc.latitude,
                     loc.longitude
                 );
@@ -69,7 +81,7 @@ export async function POST(request: NextRequest) {
 
             if (!isWithinRange) {
                 return NextResponse.json(
-                    { error: "Anda berada di luar radius lokasi absensi yang diizinkan" },
+                    { error: "Anda berada di luar radius lokasi absensi yang diizinkan." },
                     { status: 403 }
                 );
             }
@@ -80,7 +92,7 @@ export async function POST(request: NextRequest) {
         if (existing) {
             if (existing.clockOut) {
                 return NextResponse.json(
-                    { error: "Anda sudah melakukan clock-in dan clock-out hari ini" },
+                    { error: "Anda sudah melakukan clock-in dan clock-out hari ini." },
                     { status: 400 }
                 );
             }
@@ -91,13 +103,13 @@ export async function POST(request: NextRequest) {
                 clockOutPhoto: body.photo,
             });
 
+            logger.info("Clock-out success", { employeeId: session.employeeId });
             return NextResponse.json(updated);
         }
 
         const now = new Date();
         const todayDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
 
-        // Fetch the employee's shift (with day schedules), or fall back to the default
         let shift = null;
         if (employee.shiftId) {
             shift = await prisma.workShift.findUnique({
@@ -112,18 +124,16 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Validate work day using shift's per-day schedule
         if (shift) {
             const todaySchedule = shift.days.find((d) => d.dayOfWeek === todayDay);
             if (!todaySchedule || todaySchedule.isOff) {
                 return NextResponse.json(
-                    { error: "Hari ini bukan hari kerja Anda" },
+                    { error: "Hari ini bukan merupakan hari kerja Anda sesuai jadwal shift." },
                     { status: 400 }
                 );
             }
         }
 
-        // Determine attendance status using day-specific start time + tolerance
         let status: "present" | "late" = "present";
 
         if (shift) {
@@ -140,7 +150,6 @@ export async function POST(request: NextRequest) {
                 }
             }
         } else {
-            // Fallback: no shift configured, use legacy logic
             if (now.getHours() > 9) {
                 status = "late";
             }
@@ -155,9 +164,9 @@ export async function POST(request: NextRequest) {
             status,
         });
 
+        logger.info("Clock-in success", { employeeId: session.employeeId, status });
         return NextResponse.json(record);
     } catch (err) {
-        console.error("[API POST Attendance Error]:", err);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        return serverErrorResponse("AttendancePOST", err);
     }
 }

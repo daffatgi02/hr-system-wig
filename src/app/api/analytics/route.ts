@@ -1,17 +1,20 @@
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, unauthorizedResponse, forbiddenResponse, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
-    try {
-        const session = await getSession();
-        if (!session || session.role !== "hr") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
+export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
+
+    try {
         const today = new Date().toISOString().split("T")[0];
 
-        // Get all data in parallel
+        // Get all data in parallel for performance
         const [employees, todayAttendance, allLeaves, allVisits, allOvertime, recentAttendance] = await Promise.all([
             prisma.employee.findMany({ where: { isActive: true }, select: { employeeId: true, name: true, department: true } }),
             prisma.attendanceRecord.findMany({ where: { date: today } }),
@@ -39,7 +42,7 @@ export async function GET() {
                 date: dateStr,
                 present: dayRecords.filter((a) => a.status === "present").length,
                 late: dayRecords.filter((a) => a.status === "late").length,
-                absent: employees.length - dayRecords.filter((a) => a.status === "present" || a.status === "late").length,
+                absent: Math.max(0, employees.length - dayRecords.filter((a) => a.status === "present" || a.status === "late").length),
             });
         }
 
@@ -57,7 +60,7 @@ export async function GET() {
             presentToday: data.presentToday,
         }));
 
-        // Monthly overtime (last 30 days, aggregated by date)
+        // Monthly overtime (last 30 days)
         const approvedOvertime = allOvertime.filter((o) => o.status === "approved");
         const otMap: Record<string, number> = {};
         for (const ot of approvedOvertime) {
@@ -113,8 +116,7 @@ export async function GET() {
             monthlyOvertime,
             recentActivity: activities.slice(0, 10),
         });
-    } catch (error) {
-        console.error("[Analytics API Error]:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("AnalyticsGET", err);
     }
 }

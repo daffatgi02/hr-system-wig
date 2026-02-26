@@ -112,14 +112,14 @@ export default function LeaveCalendar({ leaves }: LeaveCalendarProps) {
                     const isToday = d.currentMonth && d.day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
 
                     return (
-                        <div key={i} className={`min-h-[100px] p-1.5 transition-colors ${d.currentMonth ? "bg-white" : "bg-slate-50/50"}`}>
+                        <div key={i} className={`min-h-[60px] p-1.5 transition-colors ${d.currentMonth ? "bg-white" : "bg-slate-50/50"}`}>
                             <div className="flex justify-between items-start mb-1">
-                                <span className={`text-[11px] font-bold ${d.currentMonth ? (isToday ? "w-5 h-5 bg-[var(--primary)] text-white rounded-full flex items-center justify-center -mt-0.5" : "text-[var(--text-primary)]") : "text-[var(--text-muted)] opacity-50"}`}>
+                                <span className={`text-[11px] font-bold ${d.currentMonth ? (isToday ? "w-5 h-5 bg-[#800020] text-white rounded-full flex items-center justify-center -mt-0.5" : "text-[var(--text-primary)]") : "text-[var(--text-muted)] opacity-50"}`}>
                                     {d.day}
                                 </span>
                             </div>
                             <div className="space-y-1">
-                                {dateLeaves.slice(0, 3).map((l) => (
+                                {dateLeaves.slice(0, 2).map((l) => (
                                     <div
                                         key={l.id}
                                         className={`px-1.5 py-0.5 rounded text-[9px] font-medium border truncate ${l.status === "approved" ? (TYPE_COLORS[l.type] || TYPE_COLORS.default) : "bg-white text-orange-600 border-orange-200"}`}
@@ -131,9 +131,9 @@ export default function LeaveCalendar({ leaves }: LeaveCalendarProps) {
                                         </div>
                                     </div>
                                 ))}
-                                {dateLeaves.length > 3 && (
+                                {dateLeaves.length > 2 && (
                                     <div className="text-[8px] text-[var(--text-muted)] font-bold pl-1">
-                                        +{dateLeaves.length - 3} lainnya
+                                        +{dateLeaves.length - 2} lainnya
                                     </div>
                                 )}
                             </div>

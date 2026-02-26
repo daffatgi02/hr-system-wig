@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, unauthorizedResponse, forbiddenResponse, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import { prisma } from "@/lib/prisma";
 
 interface Notification {
@@ -11,13 +12,15 @@ interface Notification {
     time: string;
 }
 
-export async function GET() {
-    try {
-        const session = await getSession();
-        if (!session || session.role !== "hr") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
+export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
+
+    try {
         const today = new Date().toISOString().split("T")[0];
         const notifications: Notification[] = [];
 
@@ -92,7 +95,7 @@ export async function GET() {
 
         if (hour >= 9) {
             const absentEmployees = await prisma.employee.findMany({
-                where: { isActive: true, employeeId: { notIn: [...presentIds] } },
+                where: { isActive: true, employeeId: { notIn: Array.from(presentIds) } },
                 select: { employeeId: true, name: true },
                 take: 5,
             });
@@ -115,8 +118,7 @@ export async function GET() {
             notifications: notifications.slice(0, 15),
             count: notifications.length,
         });
-    } catch (error) {
-        console.error("[Notifications API Error]:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("NotificationsGET", err);
     }
 }

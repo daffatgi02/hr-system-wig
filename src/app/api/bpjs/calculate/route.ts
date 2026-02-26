@@ -1,46 +1,41 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, unauthorizedResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import {
     calculateAllBpjs,
     isValidJkkRiskLevel,
     type JkkRiskLevel,
 } from "@/lib/services/bpjsService";
+import { z } from "zod";
 
-/**
- * POST /api/bpjs/calculate
- * Kalkulasi iuran BPJS Kesehatan & Ketenagakerjaan
- */
-export async function POST(req: Request) {
+const bpjsCalculateSchema = z.object({
+    grossMonthlyIncome: z.number().min(0, "Gaji bruto bulanan tidak boleh negatif"),
+    jkkRiskLevel: z.number().min(1).max(5).default(1),
+});
+
+export async function POST(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
     try {
-        const body = await req.json();
-        const { grossMonthlyIncome, jkkRiskLevel } = body;
+        const result = await validateBody(request, bpjsCalculateSchema);
+        if ("error" in result) return result.error;
+        const { grossMonthlyIncome, jkkRiskLevel } = result.data;
 
-        // ── Validasi input ──
-        if (typeof grossMonthlyIncome !== "number" || grossMonthlyIncome < 0) {
-            return NextResponse.json(
-                { error: "Gaji bruto bulanan harus berupa angka positif" },
-                { status: 400 }
-            );
+        if (!isValidJkkRiskLevel(jkkRiskLevel)) {
+            return NextResponse.json({ error: "Tingkat risiko JKK tidak valid (1-5)." }, { status: 400 });
         }
 
-        const riskLevel = typeof jkkRiskLevel === "number" ? jkkRiskLevel : 1;
-        if (!isValidJkkRiskLevel(riskLevel)) {
-            return NextResponse.json(
-                { error: "Tingkat risiko JKK harus 1–5" },
-                { status: 400 }
-            );
-        }
-
-        // ── Kalkulasi ──
-        const result = calculateAllBpjs({
+        const calculation = calculateAllBpjs({
             grossMonthlyIncome,
-            jkkRiskLevel: riskLevel as JkkRiskLevel,
+            jkkRiskLevel: jkkRiskLevel as JkkRiskLevel,
         });
 
-        return NextResponse.json(result);
-    } catch {
-        return NextResponse.json(
-            { error: "Terjadi kesalahan saat menghitung BPJS" },
-            { status: 500 }
-        );
+        return NextResponse.json(calculation);
+    } catch (err) {
+        return serverErrorResponse("BpjsCalculate", err);
     }
 }

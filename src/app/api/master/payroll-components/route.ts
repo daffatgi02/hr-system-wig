@@ -1,107 +1,123 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireAuth, unauthorizedResponse, forbiddenResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import logger from "@/lib/logger";
+
+const payrollComponentSchema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, "Nama komponen harus diisi"),
+    type: z.enum(["earning", "deduction"]),
+    isFixed: z.boolean().default(true),
+    isTaxable: z.boolean().default(true),
+    description: z.string().nullish(),
+    isActive: z.boolean().default(true),
+});
 
 export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
+
     try {
-        const session = await getSession();
-        if (!session || session.role !== "hr") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
-
-        const { searchParams } = new URL(request.url);
-        const type = searchParams.get("type"); // "allowance" | "deduction"
-
         const components = await prisma.payrollComponent.findMany({
-            where: type ? { type } : {},
-            orderBy: { name: "asc" },
+            orderBy: [{ type: "asc" }, { name: "asc" }],
         });
-
         return NextResponse.json(components);
-    } catch (error) {
-        console.error("[Master PayrollComponent GET Error]:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("MasterPayrollComponentGET", err);
     }
 }
 
 export async function POST(request: NextRequest) {
-    try {
-        const session = await getSession();
-        if (!session || session.role !== "hr") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
-        const data = await request.json();
-        if (!data.name || !data.type) {
-            return NextResponse.json({ error: "Nama dan Tipe harus diisi" }, { status: 400 });
-        }
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
+
+    try {
+        const result = await validateBody(request, payrollComponentSchema);
+        if ("error" in result) return result.error;
+        const body = result.data;
 
         const component = await prisma.payrollComponent.create({
             data: {
-                name: data.name,
-                type: data.type,
-                defaultAmount: data.defaultAmount || 0,
-                isActive: data.isActive !== undefined ? data.isActive : true,
-                description: data.description || null,
+                name: body.name,
+                type: body.type,
+                defaultAmount: 0, // Schema has it, adding manually or from body if updated
+                description: body.description || null,
+                isActive: body.isActive,
             },
         });
 
-        return NextResponse.json(component);
-    } catch (error) {
-        console.error("[Master PayrollComponent POST Error]:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        logger.info("Payroll component created", { id: component.id, name: component.name, createdBy: session.employeeId });
+        return NextResponse.json(component, { status: 201 });
+    } catch (err) {
+        return serverErrorResponse("MasterPayrollComponentPOST", err);
     }
 }
 
 export async function PUT(request: NextRequest) {
-    try {
-        const session = await getSession();
-        if (!session || session.role !== "hr") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
-        const data = await request.json();
-        if (!data.id || !data.name || !data.type) {
-            return NextResponse.json({ error: "ID, Nama, dan Tipe harus diisi" }, { status: 400 });
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
+
+    try {
+        const result = await validateBody(request, payrollComponentSchema);
+        if ("error" in result) return result.error;
+        const { id, name, type, description, isActive } = result.data;
+
+        if (!id) {
+            return NextResponse.json({ error: "ID komponen diperlukan." }, { status: 400 });
         }
 
         const component = await prisma.payrollComponent.update({
-            where: { id: data.id },
+            where: { id },
             data: {
-                name: data.name,
-                type: data.type,
-                defaultAmount: data.defaultAmount || 0,
-                isActive: data.isActive !== undefined ? data.isActive : true,
-                description: data.description || null,
+                name,
+                type,
+                description: description || undefined,
+                isActive,
             },
         });
 
+        logger.info("Payroll component updated", { id, updatedBy: session.employeeId });
         return NextResponse.json(component);
-    } catch (error) {
-        console.error("[Master PayrollComponent PUT Error]:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("MasterPayrollComponentPUT", err);
     }
 }
 
 export async function DELETE(request: NextRequest) {
-    try {
-        const session = await getSession();
-        if (!session || session.role !== "hr") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-        }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
+
+    try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get("id");
 
         if (!id) {
-            return NextResponse.json({ error: "ID harus diisi" }, { status: 400 });
+            return NextResponse.json({ error: "ID komponen diperlukan." }, { status: 400 });
         }
 
         await prisma.payrollComponent.delete({ where: { id } });
 
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("[Master PayrollComponent DELETE Error]:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        logger.info("Payroll component deleted", { id, deletedBy: session.employeeId });
+        return NextResponse.json({ success: true, message: "Komponen gaji berhasil dihapus." });
+    } catch (err) {
+        return serverErrorResponse("MasterPayrollComponentDELETE", err);
     }
 }

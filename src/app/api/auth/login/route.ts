@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSession, verifyLogin } from "@/lib/auth";
+import { checkLoginRateLimit } from "@/lib/middleware/rateLimit";
+import { validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { loginSchema } from "@/lib/validations/validationSchemas";
 
 export async function POST(request: NextRequest) {
-    try {
-        const { employeeId, password } = await request.json();
+    const rateLimited = checkLoginRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
-        if (!employeeId || !password) {
-            return NextResponse.json(
-                { error: "ID Karyawan dan password harus diisi" },
-                { status: 400 }
-            );
-        }
+    try {
+        const result = await validateBody(request, loginSchema);
+        if ("error" in result) return result.error;
+
+        const { employeeId, password } = result.data;
 
         const employee = await verifyLogin(employeeId, password);
         if (!employee) {
@@ -26,12 +28,8 @@ export async function POST(request: NextRequest) {
             success: true,
             role: employee.role,
             name: employee.name,
-            employeeId: employee.employeeId,
         });
-    } catch {
-        return NextResponse.json(
-            { error: "Server error" },
-            { status: 500 }
-        );
+    } catch (err) {
+        return serverErrorResponse("Login", err);
     }
 }

@@ -193,7 +193,6 @@ model Department {
   divisionId  String   @map("division_id")
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
-
   division    Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
 
   @@index([divisionId], map: "departments_division_id_fkey")
@@ -201,12 +200,11 @@ model Department {
 }
 
 model Division {
-  id           String     @id @default(uuid())
-  name         String     @unique
-  isActive     Boolean    @default(true) @map("is_active")
-  createdAt    DateTime   @default(now()) @map("created_at")
-
-  departments  Department[]
+  id          String       @id @default(uuid())
+  name        String       @unique
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  departments Department[]
 
   @@map("divisions")
 }
@@ -214,9 +212,9 @@ model Division {
 model Position {
   id        String   @id @default(uuid())
   name      String   @unique
-  level     String   @default("STAFF")
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
+  level     String   @default("STAFF")
 
   @@map("positions")
 }

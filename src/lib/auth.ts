@@ -3,20 +3,40 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { getEmployeeByEmployeeId } from "./services/employeeService";
 import { Employee } from "@/types";
+import logger from "@/lib/logger";
 
-const SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || "wig-attendance-secret-key-2026"
-);
+const JWT_SECRET = process.env.JWT_SECRET;
 
-export async function createSession(employee: Employee) {
+if (!JWT_SECRET || JWT_SECRET.length < 16) {
+    throw new Error(
+        "JWT_SECRET wajib diisi di .env dan minimal 16 karakter. Aplikasi tidak dapat berjalan tanpa secret yang valid."
+    );
+}
+
+const SECRET = new TextEncoder().encode(JWT_SECRET);
+
+/** Session payload stored in JWT */
+export interface SessionPayload {
+    id: string;
+    employeeId: string;
+    name: string;
+    role: "employee" | "hr";
+    level: "STAFF" | "SUPERVISOR" | "MANAGER" | "GM" | "HR" | "CEO";
+}
+
+/**
+ * Create a new session and set the JWT token as an httpOnly cookie.
+ */
+export async function createSession(employee: Employee): Promise<void> {
     const token = await new SignJWT({
         id: employee.id,
         employeeId: employee.employeeId,
         name: employee.name,
         role: employee.role,
         level: employee.level,
-    })
+    } satisfies SessionPayload)
         .setProtectedHeader({ alg: "HS256" })
+        .setIssuedAt()
         .setExpirationTime("8h")
         .sign(SECRET);
 
@@ -28,62 +48,61 @@ export async function createSession(employee: Employee) {
         maxAge: 8 * 60 * 60,
         path: "/",
     });
-
-    return token;
 }
 
-export async function getSession(): Promise<{
-    id: string;
-    employeeId: string;
-    name: string;
-    role: "employee" | "hr";
-    level: "STAFF" | "SUPERVISOR" | "MANAGER" | "GM" | "HR" | "CEO";
-} | null> {
+/**
+ * Retrieve and verify the current session from the cookie.
+ */
+export async function getSession(): Promise<SessionPayload | null> {
     const cookieStore = await cookies();
     const token = cookieStore.get("session")?.value;
     if (!token) return null;
 
     try {
         const { payload } = await jwtVerify(token, SECRET);
-        return payload as {
-            id: string;
-            employeeId: string;
-            name: string;
-            role: "employee" | "hr";
-            level: "STAFF" | "SUPERVISOR" | "MANAGER" | "GM" | "HR" | "CEO";
-        };
+        return payload as unknown as SessionPayload;
     } catch {
         return null;
     }
 }
 
-export async function destroySession() {
+/**
+ * Destroy the current session by deleting the cookie.
+ */
+export async function destroySession(): Promise<void> {
     const cookieStore = await cookies();
     cookieStore.delete("session");
 }
 
+/**
+ * Verify login credentials. Returns the employee on success, null on failure.
+ * Uses constant-time comparison and does NOT leak which field was wrong.
+ */
 export async function verifyLogin(
     employeeId: string,
     password: string
 ): Promise<Employee | null> {
-    console.log("[Auth] Verifying login for:", employeeId);
     const employee = await getEmployeeByEmployeeId(employeeId);
 
     if (!employee) {
-        console.log("[Auth] Employee not found:", employeeId);
+        // Constant-time: still run bcrypt to prevent timing attacks
+        await bcrypt.hash("dummy", 10);
+        logger.debug("Login attempt: employee not found");
         return null;
     }
 
     if (!employee.isActive) {
-        console.log("[Auth] Employee is inactive:", employeeId);
+        logger.debug("Login attempt: inactive employee");
         return null;
     }
 
     const isValid = await bcrypt.compare(password, employee.password);
-    console.log("[Auth] Password valid:", isValid);
 
-    if (isValid) {
-        return employee;
+    if (!isValid) {
+        logger.debug("Login attempt: invalid credentials");
+        return null;
     }
-    return null;
+
+    logger.info("Login successful", { employeeId: employee.employeeId });
+    return employee;
 }

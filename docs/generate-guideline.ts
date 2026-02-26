@@ -174,7 +174,7 @@ function generateGuideline() {
         "   5.6. Manajemen Karyawan",
         "   5.7. Manajemen Jam Kerja (Shift)",
         "   5.8. Manajemen Lembur",
-        "   5.9. Payroll / Slip Gaji",
+        "   5.9. Payroll (Slip Gaji & Rekapitulasi)",
         "   5.10. Pengaturan Komponen Payroll",
         "   5.11. Kalkulator PPh 21",
         "   5.12. Kalkulator BPJS",
@@ -653,24 +653,30 @@ function generateGuideline() {
 
     // 5.9 Payroll
     y = addSpacer(y, 6);
-    y = checkPage(doc, y, 60);
-    y = addSubHeader(doc, "5.9. Payroll / Slip Gaji", y);
+    y = checkPage(doc, y, 90);
+    y = addSubHeader(doc, "5.9. Payroll (Slip Gaji & Rekapitulasi)", y);
     y = addBody(doc, [
-        "Modul untuk menerbitkan slip gaji bulanan karyawan.",
+        "Modul komprehensif untuk mengelola, menerbitkan slip gaji, dan melihat",
+        "rekapitulasi payroll bulanan serta riwayat penggajian perusahaan.",
     ], y);
     y = addSpacer(y, 3);
-    y = addBody(doc, ["Cara Membuat Slip Gaji:"], y);
+    y = addBody(doc, ["A. Cara Membuat Slip Gaji:"], y);
     y = addNumbered(doc, [
-        "Buka menu \"Payroll\".",
-        "Klik \"Terbitkan Slip Gaji\".",
+        "Buka menu \"Payroll\" dan pilih tab \"Buat Slip Gaji\".",
         "Pilih karyawan.",
-        "Isi komponen gaji: Gaji Pokok.",
-        "Tambahkan Tunjangan (bisa multiple): Nama tunjangan dan jumlah.",
-        "Tambahkan Potongan (bisa multiple): Nama potongan dan jumlah.",
+        "Isi komponen: Gaji Pokok, Tunjangan (multiple), dan Potongan (multiple).",
         "Masukkan nilai lembur (jika ada).",
-        "Gaji Bersih (Net Salary) dihitung otomatis.",
-        "Pilih periode dan tanggal terbit.",
-        "Klik \"Terbitkan\" — slip gaji langsung muncul di portal karyawan.",
+        "Gaji Bersih (Net Salary) dihitung otomatis oleh sistem.",
+        "Pilih periode dan tanggal terbit lalu klik \"Terbitkan\".",
+    ], y);
+    y = addSpacer(y, 3);
+    y = checkPage(doc, y, 40);
+    y = addBody(doc, ["B. Rekapitulasi & Riwayat Payroll:"], y);
+    y = addBullet(doc, [
+        "Rekap Payroll: Menampilkan ringkasan total gaji yang telah diproses per periode.",
+        "Riwayat Payroll: Menampilkan detail histori slip gaji setiap karyawan.",
+        "Advanced Filtering: Filter data berdasarkan Pencarian Nama, Departemen, dan Divisi.",
+        "Export Laporan: Dilengkapi dengan fitur Export Data ke PDF dan Excel (.xlsx).",
     ], y);
 
     // 5.10 Pengaturan Payroll
@@ -748,6 +754,7 @@ function generateGuideline() {
         "Export Laporan Absensi — rekap kehadiran per periode.",
         "Export Data Karyawan — daftar lengkap karyawan aktif.",
         "Export Laporan Cuti — rekap pengajuan dan penggunaan cuti.",
+        "Export Payroll — rekap histori dan rekapitulasi penggajian.",
         "Format tersedia: PDF (jsPDF) dan Excel (xlsx).",
     ], y);
 

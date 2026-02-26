@@ -1,113 +1,134 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireAuth, unauthorizedResponse, forbiddenResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import bcrypt from "bcryptjs";
 import {
-    getEmployees,
     getVisibleEmployees,
     getEmployeeByEmployeeId,
     createEmployee,
     updateEmployee,
     deleteEmployee,
 } from "@/lib/services/employeeService";
+import { employeeCreateSchema, employeeUpdateSchema } from "@/lib/validations/validationSchemas";
+import logger from "@/lib/logger";
 
-export async function GET() {
-    const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
+    try {
+        const requester = await getEmployeeByEmployeeId(session.employeeId);
+        if (!requester) {
+            return NextResponse.json({ error: "Data pengguna Anda tidak ditemukan." }, { status: 404 });
+        }
+
+        const employees = (await getVisibleEmployees(requester)).map((e) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { password, faceDescriptor, ...safe } = e;
+            return safe;
+        });
+
+        return NextResponse.json(employees);
+    } catch (err) {
+        return serverErrorResponse("EmployeesGET", err);
     }
-
-    const requester = await getEmployeeByEmployeeId(session.employeeId);
-    if (!requester) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const employees = (await getVisibleEmployees(requester)).map((e) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, faceDescriptor, ...safe } = e;
-        return safe;
-    });
-
-    return NextResponse.json(employees);
 }
 
 export async function POST(request: NextRequest) {
-    const session = await getSession();
-    if (!session || session.role !== "hr") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
 
     try {
-        const body = await request.json();
-        const hashedPassword = await bcrypt.hash("password123", 10);
+        const result = await validateBody(request, employeeCreateSchema);
+        if ("error" in result) return result.error;
+        const body = result.data;
+
+        // Use a more secure default password or handle via invitation
+        const hashedPassword = await bcrypt.hash("wig-absensi-default-pass", 12);
+
         const employee = await createEmployee({
             ...body,
             password: hashedPassword,
-            isActive: body.isActive !== undefined ? body.isActive : true,
-            totalLeave: body.totalLeave || 12,
-            usedLeave: body.usedLeave || 0,
-            basicSalary: body.basicSalary || 0,
-            payrollComponents: body.payrollComponents || [],
         });
+
+        logger.info("New employee created", { employeeId: employee.employeeId, createdBy: session.employeeId });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...safe } = employee;
         return NextResponse.json(safe, { status: 201 });
     } catch (err: any) {
-        console.error("[API POST Employee Error]:", err);
         if (err?.code === "P2002") {
-            return NextResponse.json({ error: "ID Karyawan sudah terdaftar." }, { status: 400 });
+            return NextResponse.json({ error: "ID Karyawan sudah terdaftar. Gunakan ID lain." }, { status: 400 });
         }
         if (err?.code === "P2003") {
-            return NextResponse.json({ error: "Data referensi tidak valid (shift/atasan). Periksa kembali data yang diisi." }, { status: 400 });
+            return NextResponse.json({ error: "Data referensi tidak valid (shift/atasan). Silakan periksa kembali." }, { status: 400 });
         }
-        return NextResponse.json({ error: "Gagal menyimpan data karyawan." }, { status: 500 });
+        return serverErrorResponse("EmployeesPOST", err);
     }
 }
 
 export async function PUT(request: NextRequest) {
-    const session = await getSession();
-    if (!session || session.role !== "hr") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
 
     try {
-        const body = await request.json();
-        const { id, ...data } = body;
+        const result = await validateBody(request, employeeUpdateSchema);
+        if ("error" in result) return result.error;
+
+        const { id, ...data } = result.data as { id: string } & Record<string, any>;
+
         const updated = await updateEmployee(id, data);
         if (!updated) {
-            return NextResponse.json({ error: "Not found" }, { status: 404 });
+            return NextResponse.json({ error: "Data karyawan tidak ditemukan." }, { status: 404 });
         }
+
+        logger.info("Employee updated", { targetId: updated.employeeId, updatedBy: session.employeeId });
+
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...safe } = updated;
         return NextResponse.json(safe);
     } catch (err: any) {
-        console.error("[API PUT Employee Error]:", err);
         if (err?.code === "P2002") {
-            return NextResponse.json({ error: "ID Karyawan sudah digunakan." }, { status: 400 });
+            return NextResponse.json({ error: "ID Karyawan sudah digunakan oleh akun lain." }, { status: 400 });
         }
-        if (err?.code === "P2003") {
-            return NextResponse.json({ error: "Data referensi tidak valid (shift/atasan). Periksa kembali data yang diisi." }, { status: 400 });
-        }
-        return NextResponse.json({ error: "Gagal memperbarui data karyawan." }, { status: 500 });
+        return serverErrorResponse("EmployeesPUT", err);
     }
 }
 
 export async function DELETE(request: NextRequest) {
-    const session = await getSession();
-    if (!session || session.role !== "hr") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    if (!id) {
-        return NextResponse.json({ error: "ID required" }, { status: 400 });
-    }
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
 
-    const deleted = await deleteEmployee(id);
-    if (!deleted) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get("id");
+        if (!id) {
+            return NextResponse.json({ error: "ID Karyawan diperlukan untuk penghapusan." }, { status: 400 });
+        }
 
-    return NextResponse.json({ success: true });
+        const deleted = await deleteEmployee(id);
+        if (!deleted) {
+            return NextResponse.json({ error: "Data karyawan tidak ditemukan." }, { status: 404 });
+        }
+
+        logger.info("Employee deleted", { employeeId: id, deletedBy: session.employeeId });
+        return NextResponse.json({ success: true, message: "Data karyawan berhasil dihapus." });
+    } catch (err) {
+        return serverErrorResponse("EmployeesDELETE", err);
+    }
 }

@@ -1,50 +1,45 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, unauthorizedResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import {
     calculatePph21,
     isValidPtkpStatus,
     type PtkpStatus,
 } from "@/lib/services/pph21Service";
+import { z } from "zod";
 
-/**
- * POST /api/pph21/calculate
- * Kalkulasi PPh 21 menggunakan skema TER (PP 58/2023)
- */
-export async function POST(req: Request) {
+const pph21CalculateSchema = z.object({
+    grossMonthlyIncome: z.number().min(0, "Penghasilan bruto bulanan tidak boleh negatif"),
+    ptkpStatus: z.string().min(1, "Status PTKP diperlukan"),
+    month: z.number().min(1).max(12).default(1),
+});
+
+export async function POST(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
     try {
-        const body = await req.json();
-        const { grossMonthlyIncome, ptkpStatus, month } = body;
+        const result = await validateBody(request, pph21CalculateSchema);
+        if ("error" in result) return result.error;
+        const { grossMonthlyIncome, ptkpStatus, month } = result.data;
 
-        // ── Validasi input ──
-        if (typeof grossMonthlyIncome !== "number" || grossMonthlyIncome < 0) {
-            return NextResponse.json(
-                { error: "Penghasilan bruto bulanan harus berupa angka positif" },
-                { status: 400 }
-            );
+        if (!isValidPtkpStatus(ptkpStatus)) {
+            return NextResponse.json({
+                error: "Status PTKP tidak valid. Gunakan: TK/0, TK/1, TK/2, TK/3, K/0, K/1, K/2, K/3"
+            }, { status: 400 });
         }
 
-        if (!ptkpStatus || !isValidPtkpStatus(ptkpStatus)) {
-            return NextResponse.json(
-                { error: "Status PTKP tidak valid. Gunakan: TK/0, TK/1, TK/2, TK/3, K/0, K/1, K/2, K/3" },
-                { status: 400 }
-            );
-        }
-
-        const taxMonth = typeof month === "number" && month >= 1 && month <= 12
-            ? month
-            : 1;
-
-        // ── Kalkulasi ──
-        const result = calculatePph21({
+        const calculation = calculatePph21({
             grossMonthlyIncome,
             ptkpStatus: ptkpStatus as PtkpStatus,
-            month: taxMonth,
+            month,
         });
 
-        return NextResponse.json(result);
-    } catch {
-        return NextResponse.json(
-            { error: "Terjadi kesalahan saat menghitung PPh 21" },
-            { status: 500 }
-        );
+        return NextResponse.json(calculation);
+    } catch (err) {
+        return serverErrorResponse("Pph21Calculate", err);
     }
 }

@@ -1,71 +1,100 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireAuth, unauthorizedResponse, forbiddenResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
 import { getNews, createNews, updateNews, deleteNews } from "@/lib/services/newsService";
+import { newsCreateSchema, newsUpdateSchema } from "@/lib/validations/validationSchemas";
+import logger from "@/lib/logger";
 
-export async function GET() {
-    const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+
+    try {
+        const news = await getNews();
+        return NextResponse.json(news);
+    } catch (err) {
+        return serverErrorResponse("NewsGET", err);
     }
-
-    return NextResponse.json(await getNews());
 }
 
 export async function POST(request: NextRequest) {
-    const session = await getSession();
-    if (!session || session.role !== "hr") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
 
     try {
-        const body = await request.json();
+        const result = await validateBody(request, newsCreateSchema);
+        if ("error" in result) return result.error;
+        const body = result.data;
+
         const news = await createNews({
             ...body,
             author: session.name,
             createdAt: new Date().toISOString(),
-            isPinned: body.isPinned || false,
         });
+
+        logger.info("News item created", { newsId: news.id, author: session.employeeId });
         return NextResponse.json(news, { status: 201 });
-    } catch {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("NewsPOST", err);
     }
 }
 
 export async function PUT(request: NextRequest) {
-    const session = await getSession();
-    if (!session || session.role !== "hr") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
 
     try {
-        const body = await request.json();
-        const { id, ...data } = body;
+        const result = await validateBody(request, newsUpdateSchema);
+        if ("error" in result) return result.error;
+
+        const { id, ...data } = result.data as { id: string } & Record<string, any>;
+
         const updated = await updateNews(id, data);
         if (!updated) {
-            return NextResponse.json({ error: "Not found" }, { status: 404 });
+            return NextResponse.json({ error: "Pengumuman tidak ditemukan." }, { status: 404 });
         }
+
+        logger.info("News item updated", { newsId: id, updatedBy: session.employeeId });
         return NextResponse.json(updated);
-    } catch {
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    } catch (err) {
+        return serverErrorResponse("NewsPUT", err);
     }
 }
 
 export async function DELETE(request: NextRequest) {
-    const session = await getSession();
-    if (!session || session.role !== "hr") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    if (!id) {
-        return NextResponse.json({ error: "ID required" }, { status: 400 });
-    }
+    const session = await requireAuth();
+    if (!session) return unauthorizedResponse();
+    if (session.role !== "hr") return forbiddenResponse();
 
-    const deleted = await deleteNews(id);
-    if (!deleted) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get("id");
+        if (!id) {
+            return NextResponse.json({ error: "ID pengumuman diperlukan." }, { status: 400 });
+        }
 
-    return NextResponse.json({ success: true });
+        const success = await deleteNews(id);
+        if (!success) {
+            return NextResponse.json({ error: "Pengumuman tidak ditemukan." }, { status: 404 });
+        }
+
+        logger.info("News item deleted", { newsId: id, deletedBy: session.employeeId });
+        return NextResponse.json({ success: true, message: "Pengumuman berhasil dihapus." });
+    } catch (err) {
+        return serverErrorResponse("NewsDELETE", err);
+    }
 }

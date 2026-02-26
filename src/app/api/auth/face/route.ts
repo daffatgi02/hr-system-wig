@@ -1,14 +1,17 @@
-import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkApiRateLimit } from "@/lib/middleware/rateLimit";
+import { unauthorizedResponse, validateBody, serverErrorResponse } from "@/lib/middleware/apiGuard";
+import { faceDescriptorSchema } from "@/lib/validations/validationSchemas";
 
 /** GET — Check if current employee has a face registered */
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
+
     const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     const employee = await prisma.employee.findUnique({
         where: { employeeId: session.employeeId },
@@ -16,41 +19,40 @@ export async function GET() {
     });
 
     if (!employee) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
+        return NextResponse.json(
+            { error: "Data karyawan tidak ditemukan" },
+            { status: 404 }
+        );
     }
 
     const descriptorRaw = employee.faceDescriptor as string | null;
     const descriptor = descriptorRaw ? JSON.parse(descriptorRaw) : null;
     return NextResponse.json({
         hasFace: !!descriptor && Array.isArray(descriptor) && descriptor.length === 128,
-        descriptor: descriptor,
+        descriptor,
     });
 }
 
 /** POST — Save face descriptor for current employee */
-export async function POST(request: Request) {
-    const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export async function POST(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
     try {
-        const body = await request.json();
-        const { descriptor } = body;
+        const session = await getSession();
+        if (!session) return unauthorizedResponse();
 
-        // Validate descriptor format
-        if (!descriptor || !Array.isArray(descriptor) || descriptor.length !== 128) {
-            return NextResponse.json(
-                { error: "Face descriptor harus berupa array 128 angka" },
-                { status: 400 }
-            );
-        }
+        const result = await validateBody(request, faceDescriptorSchema);
+        if ("error" in result) return result.error;
 
-        // Validate all entries are numbers
-        const isValidNumbers = descriptor.every((v: unknown) => typeof v === "number" && !isNaN(v as number));
+        const { descriptor } = result.data;
+
+        const isValidNumbers = descriptor.every(
+            (v: number) => typeof v === "number" && !isNaN(v)
+        );
         if (!isValidNumbers) {
             return NextResponse.json(
-                { error: "Face descriptor mengandung data tidak valid" },
+                { error: "Data face descriptor mengandung nilai tidak valid" },
                 { status: 400 }
             );
         }
@@ -62,19 +64,19 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error("[API Face Error]:", err);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        return serverErrorResponse("FaceEnroll", err);
     }
 }
 
 /** DELETE — Remove face descriptor for current employee */
-export async function DELETE() {
-    const session = await getSession();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export async function DELETE(request: NextRequest) {
+    const rateLimited = checkApiRateLimit(request.headers);
+    if (rateLimited) return rateLimited;
 
     try {
+        const session = await getSession();
+        if (!session) return unauthorizedResponse();
+
         await prisma.employee.update({
             where: { employeeId: session.employeeId },
             data: { faceDescriptor: null },
@@ -82,7 +84,6 @@ export async function DELETE() {
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error("[API Face Delete Error]:", err);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        return serverErrorResponse("FaceDelete", err);
     }
 }
