@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
         const position = await prisma.position.create({
             data: {
                 name: data.name,
+                level: data.level || "STAFF",
                 isActive: data.isActive !== undefined ? data.isActive : true,
             },
         });
@@ -62,6 +63,7 @@ export async function PUT(request: NextRequest) {
             where: { id: data.id },
             data: {
                 name: data.name,
+                level: data.level || "STAFF",
                 isActive: data.isActive !== undefined ? data.isActive : true,
             },
         });

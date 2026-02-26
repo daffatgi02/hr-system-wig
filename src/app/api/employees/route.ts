@@ -52,9 +52,15 @@ export async function POST(request: NextRequest) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...safe } = employee;
         return NextResponse.json(safe, { status: 201 });
-    } catch (err) {
+    } catch (err: any) {
         console.error("[API POST Employee Error]:", err);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        if (err?.code === "P2002") {
+            return NextResponse.json({ error: "ID Karyawan sudah terdaftar." }, { status: 400 });
+        }
+        if (err?.code === "P2003") {
+            return NextResponse.json({ error: "Data referensi tidak valid (shift/atasan). Periksa kembali data yang diisi." }, { status: 400 });
+        }
+        return NextResponse.json({ error: "Gagal menyimpan data karyawan." }, { status: 500 });
     }
 }
 
@@ -74,9 +80,15 @@ export async function PUT(request: NextRequest) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...safe } = updated;
         return NextResponse.json(safe);
-    } catch (err) {
+    } catch (err: any) {
         console.error("[API PUT Employee Error]:", err);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        if (err?.code === "P2002") {
+            return NextResponse.json({ error: "ID Karyawan sudah digunakan." }, { status: 400 });
+        }
+        if (err?.code === "P2003") {
+            return NextResponse.json({ error: "Data referensi tidak valid (shift/atasan). Periksa kembali data yang diisi." }, { status: 400 });
+        }
+        return NextResponse.json({ error: "Gagal memperbarui data karyawan." }, { status: 500 });
     }
 }
 

@@ -4,17 +4,18 @@ import { useEffect, useState } from "react";
 import {
     Users, Mail, Phone, Building, Briefcase, Calendar,
     Clock, Layers, MapPin, Wallet, Plus, Trash2,
-    Loader2, Check, ArrowLeft
+    Loader2, Check, ArrowLeft, Shield, UserCog
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Employee, EmployeePayrollComponent } from "@/types";
+import { useToast } from "@/components/Toast";
 
 interface ShiftDay { dayOfWeek: number; startTime: string; endTime: string; isOff: boolean; }
 interface WorkShift { id: string; name: string; isDefault: boolean; days: ShiftDay[]; }
 interface Location { id: string; name: string; }
 interface Division { id: string; name: string; }
 interface Department { id: string; name: string; divisionId: string; division?: { name: string } }
-interface Position { id: string; name: string; }
+interface Position { id: string; name: string; level: string; }
 interface MasterPayrollComponent { id: string; name: string; type: "allowance" | "deduction"; defaultAmount: number; isActive: boolean; }
 
 interface Props {
@@ -26,6 +27,7 @@ export default function EmployeeForm({ initialData, isEdit }: Props) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const toast = useToast();
 
     // Master data states
     const [shifts, setShifts] = useState<WorkShift[]>([]);
@@ -34,6 +36,7 @@ export default function EmployeeForm({ initialData, isEdit }: Props) {
     const [masterPositions, setMasterPositions] = useState<Position[]>([]);
     const [masterLocations, setMasterLocations] = useState<Location[]>([]);
     const [masterPayroll, setMasterPayroll] = useState<MasterPayrollComponent[]>([]);
+    const [allEmployees, setAllEmployees] = useState<{ employeeId: string; name: string; level: string }[]>([]);
 
     const [form, setForm] = useState({
         employeeId: initialData?.employeeId || "",
@@ -53,18 +56,21 @@ export default function EmployeeForm({ initialData, isEdit }: Props) {
         locations: initialData?.locations || [] as { id: string; name: string }[],
         basicSalary: initialData?.basicSalary || 0,
         payrollComponents: initialData?.payrollComponents || [] as any[],
+        level: (initialData as any)?.level || "STAFF",
+        managerId: (initialData as any)?.managerId || "",
     });
 
     useEffect(() => {
         const load = async () => {
             try {
-                const [d, v, p, l, s, m] = await Promise.all([
+                const [d, v, p, l, s, m, emps] = await Promise.all([
                     fetch("/api/master/departments").then(r => r.json()),
                     fetch("/api/master/divisions").then(r => r.json()),
                     fetch("/api/master/positions").then(r => r.json()),
                     fetch("/api/master/locations").then(r => r.json()),
                     fetch("/api/shifts").then(r => r.json()),
                     fetch("/api/master/payroll-components").then(r => r.json()),
+                    fetch("/api/employees").then(r => r.json()),
                 ]);
                 setMasterDepts(d);
                 setMasterDivisions(v);
@@ -72,6 +78,7 @@ export default function EmployeeForm({ initialData, isEdit }: Props) {
                 setMasterLocations(l);
                 setShifts(s);
                 setMasterPayroll(m);
+                if (Array.isArray(emps)) setAllEmployees(emps.map((e: any) => ({ employeeId: e.employeeId, name: e.name, level: e.level || "STAFF" })));
 
                 // Set default shift if creating new
                 if (!isEdit && !form.shiftId) {
@@ -114,14 +121,15 @@ export default function EmployeeForm({ initialData, isEdit }: Props) {
                 body: JSON.stringify(body),
             });
             if (res.ok) {
+                toast(isEdit ? "Data karyawan berhasil diperbarui!" : "Karyawan baru berhasil ditambahkan!", "success");
                 router.push("/dashboard/employees");
                 router.refresh();
             } else {
                 const error = await res.json();
-                alert(error.error || "Gagal menyimpan data");
+                toast(error.error || "Gagal menyimpan data karyawan.", "error");
             }
         } catch (err) {
-            alert("Kesalahan koneksi");
+            toast("Kesalahan koneksi ke server.", "error");
         } finally {
             setLoading(false);
         }
@@ -251,7 +259,10 @@ export default function EmployeeForm({ initialData, isEdit }: Props) {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="form-group !mb-0">
                                 <label className="form-label">Jabatan</label>
-                                <select className="form-select" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} required>
+                                <select className="form-select" value={form.position} onChange={(e) => {
+                                    const selectedPos = masterPositions.find(p => p.name === e.target.value);
+                                    setForm({ ...form, position: e.target.value, level: selectedPos?.level || "STAFF", managerId: "" });
+                                }} required>
                                     <option value="">Pilih Jabatan</option>
                                     {masterPositions.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                                 </select>
@@ -261,6 +272,25 @@ export default function EmployeeForm({ initialData, isEdit }: Props) {
                                 <select className="form-select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as any })}>
                                     <option value="employee">Employee (User)</option>
                                     <option value="hr">HR (Manager)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="form-group !mb-0">
+                                <label className="form-label"><span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5 text-slate-400" /> Level Organisasi</span></label>
+                                <div className="form-input bg-[var(--secondary)] cursor-not-allowed text-sm font-medium">
+                                    {({ STAFF: "Staff (Level 1)", SUPERVISOR: "Supervisor (Level 2)", MANAGER: "Manager (Level 3)", GM: "General Manager (Level 4)", HR: "HR (Level 5)", CEO: "CEO (Level 5)" } as Record<string, string>)[form.level] || form.level}
+                                </div>
+                            </div>
+                            <div className="form-group !mb-0">
+                                <label className="form-label"><span className="flex items-center gap-1"><UserCog className="w-3.5 h-3.5 text-slate-400" /> Atasan Langsung</span></label>
+                                <select className="form-select" value={form.managerId} onChange={(e) => setForm({ ...form, managerId: e.target.value })} disabled={form.level === "CEO"}>
+                                    <option value="">Tidak Ada / Langsung ke CEO</option>
+                                    {allEmployees
+                                        .filter(e => e.employeeId !== (initialData?.employeeId || ""))
+                                        .map(e => <option key={e.employeeId} value={e.employeeId}>{e.name} ({e.employeeId})</option>)
+                                    }
                                 </select>
                             </div>
                         </div>

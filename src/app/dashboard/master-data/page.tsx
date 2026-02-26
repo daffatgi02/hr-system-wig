@@ -37,6 +37,7 @@ interface Division {
 interface Position {
     id: string;
     name: string;
+    level: string;
     isActive: boolean;
 }
 
@@ -65,7 +66,7 @@ export default function MasterDataPage() {
     // Form states
     const [deptForm, setDeptForm] = useState({ id: "", name: "", code: "", description: "", divisionId: "", isActive: true });
     const [divForm, setDivForm] = useState({ id: "", name: "", isActive: true });
-    const [posForm, setPosForm] = useState({ id: "", name: "", isActive: true });
+    const [posForm, setPosForm] = useState({ id: "", name: "", level: "STAFF", isActive: true });
     const [locForm, setLocForm] = useState({ id: "", name: "", latitude: "", longitude: "", radius: "100", isActive: true });
     const [searchQuery, setSearchQuery] = useState("");
     const [searchLoading, setSearchLoading] = useState(false);
@@ -141,7 +142,7 @@ export default function MasterDataPage() {
     const resetForms = () => {
         setDeptForm({ id: "", name: "", code: "", description: "", divisionId: "", isActive: true });
         setDivForm({ id: "", name: "", isActive: true });
-        setPosForm({ id: "", name: "", isActive: true });
+        setPosForm({ id: "", name: "", level: "STAFF", isActive: true });
         setLocForm({ id: "", name: "", latitude: "", longitude: "", radius: "100", isActive: true });
         setEditMode(false);
         setMsg(null);
@@ -179,6 +180,7 @@ export default function MasterDataPage() {
         setPosForm({
             id: pos.id,
             name: pos.name,
+            level: pos.level || "STAFF",
             isActive: pos.isActive
         });
         setEditMode(true);
@@ -555,18 +557,24 @@ export default function MasterDataPage() {
                             <thead>
                                 <tr>
                                     <th>Nama Jabatan</th>
+                                    <th>Level Organisasi</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {positions.length === 0 ? (
-                                    <tr><td colSpan={3} className="text-center py-12 text-[var(--text-muted)]">Belum ada data jabatan</td></tr>
+                                    <tr><td colSpan={4} className="text-center py-12 text-[var(--text-muted)]">Belum ada data jabatan</td></tr>
                                 ) : (
                                     positions.map((pos) => (
                                         <tr key={pos.id}>
                                             <td>
                                                 <div className="font-semibold text-[var(--text-primary)]">{pos.name}</div>
+                                            </td>
+                                            <td>
+                                                <span className="text-xs px-2 py-0.5 bg-[var(--secondary)] rounded-full font-medium">
+                                                    {({ STAFF: "Staff (L1)", SUPERVISOR: "SPV (L2)", MANAGER: "Manager (L3)", GM: "GM (L4)", HR: "HR (L5)", CEO: "CEO (L5)" } as Record<string, string>)[pos.level] || pos.level}
+                                                </span>
                                             </td>
                                             <td>
                                                 <span className={`badge ${pos.isActive ? "badge-success" : "badge-error"}`}>
@@ -762,16 +770,33 @@ export default function MasterDataPage() {
                                             required
                                         />
                                     </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Status</label>
-                                        <select
-                                            className="form-select"
-                                            value={posForm.isActive ? "1" : "0"}
-                                            onChange={(e) => setPosForm({ ...posForm, isActive: e.target.value === "1" })}
-                                        >
-                                            <option value="1">Aktif</option>
-                                            <option value="0">Non-aktif</option>
-                                        </select>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="form-group">
+                                            <label className="form-label">Level Organisasi</label>
+                                            <select
+                                                className="form-select"
+                                                value={posForm.level}
+                                                onChange={(e) => setPosForm({ ...posForm, level: e.target.value })}
+                                            >
+                                                <option value="STAFF">Staff (Level 1)</option>
+                                                <option value="SUPERVISOR">Supervisor (Level 2)</option>
+                                                <option value="MANAGER">Manager (Level 3)</option>
+                                                <option value="GM">General Manager (Level 4)</option>
+                                                <option value="HR">HR (Level 5)</option>
+                                                <option value="CEO">CEO (Level 5)</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Status</label>
+                                            <select
+                                                className="form-select"
+                                                value={posForm.isActive ? "1" : "0"}
+                                                onChange={(e) => setPosForm({ ...posForm, isActive: e.target.value === "1" })}
+                                            >
+                                                <option value="1">Aktif</option>
+                                                <option value="0">Non-aktif</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </>
                             ) : (
@@ -892,7 +917,8 @@ export default function MasterDataPage() {
                         </form>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }

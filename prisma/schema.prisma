@@ -214,6 +214,7 @@ model Division {
 model Position {
   id        String   @id @default(uuid())
   name      String   @unique
+  level     String   @default("STAFF")
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
