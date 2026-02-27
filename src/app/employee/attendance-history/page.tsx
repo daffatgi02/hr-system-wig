@@ -90,6 +90,13 @@ export default function AttendanceHistoryPage() {
     const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterMode, selectedDate, selectedMonth, selectedYear]);
+
     useEffect(() => {
         setLoading(true);
         fetch("/api/attendance")
@@ -123,6 +130,13 @@ export default function AttendanceHistoryPage() {
         const leave = filteredRecords.filter((r) => r.status === "leave").length;
         return { present, late, absent, leave, total: filteredRecords.length };
     }, [filteredRecords]);
+
+    const paginatedRecords = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredRecords.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredRecords, currentPage]);
+
+    const totalPages = Math.ceil(filteredRecords.length / ITEMS_PER_PAGE) || 1;
 
     /** Available years from data, or default to current year */
     const availableYears = useMemo(() => {
@@ -310,7 +324,7 @@ export default function AttendanceHistoryPage() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredRecords.map((r) => {
+                                    paginatedRecords.map((r) => {
                                         const si = STATUS_MAP[r.status] ?? STATUS_MAP["present"];
                                         const StatusIcon = si.icon;
                                         return (
@@ -356,9 +370,15 @@ export default function AttendanceHistoryPage() {
                         </table>
                     </div>
                     {filteredRecords.length > 0 && (
-                        <div className="px-4 py-3 border-t border-[var(--border)] text-xs text-[var(--text-muted)] flex items-center justify-between">
-                            <span>Menampilkan <strong className="text-[var(--text-primary)]">{filteredRecords.length}</strong> catatan</span>
-                            <span>{periodLabel}</span>
+                        <div className="px-4 py-3 border-t border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                            <span className="text-xs text-[var(--text-muted)]">
+                                Menampilkan <strong className="text-[var(--text-primary)]">{paginatedRecords.length}</strong> dari <strong className="text-[var(--text-primary)]">{filteredRecords.length}</strong> catatan
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button className="btn btn-secondary btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+                                <span className="text-xs font-medium text-[var(--text-muted)]">Hal {currentPage} / {totalPages}</span>
+                                <button className="btn btn-secondary btn-sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+                            </div>
                         </div>
                     )}
                 </div>

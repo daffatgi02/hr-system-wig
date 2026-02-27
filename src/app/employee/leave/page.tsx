@@ -22,6 +22,9 @@ export default function LeavePage() {
     const [form, setForm] = useState({ type: "annual", startDate: "", endDate: "", reason: "", attachment: "" });
     const [loading, setLoading] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
     useEffect(() => {
         fetch("/api/leave").then((r) => r.json()).then((data) => {
             if (Array.isArray(data)) {
@@ -95,6 +98,9 @@ export default function LeavePage() {
             win.document.write(`<iframe src="${data}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
         }
     };
+
+    const paginatedLeaves = leaves.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(leaves.length / ITEMS_PER_PAGE) || 1;
 
     return (
         <div className="space-y-6 animate-[fadeIn_0.5s_ease]">
@@ -197,35 +203,45 @@ export default function LeavePage() {
                         <p className="text-sm font-semibold text-[var(--text-primary)]">Belum ada pengajuan</p>
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {leaves.map((l) => {
-                            const info = getStatusInfo(l.status);
-                            const StatusIcon = info.icon;
-                            return (
-                                <div key={l.id} className="card p-4 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <span className="badge badge-info">{getTypeLabel(l.type)}</span>
-                                            {l.attachment && (
-                                                <button onClick={() => openAttachment(l.attachment!)} className="flex items-center gap-1.5 px-2 py-0.5 bg-[var(--secondary)] text-[var(--primary)] rounded text-[10px] font-bold hover:bg-[var(--primary)]/10 transition-colors">
-                                                    <Paperclip className="w-3 h-3" /> Bukti
-                                                </button>
-                                            )}
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            {paginatedLeaves.map((l) => {
+                                const info = getStatusInfo(l.status);
+                                const StatusIcon = info.icon;
+                                return (
+                                    <div key={l.id} className="card p-4 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="badge badge-info">{getTypeLabel(l.type)}</span>
+                                                {l.attachment && (
+                                                    <button onClick={() => openAttachment(l.attachment!)} className="flex items-center gap-1.5 px-2 py-0.5 bg-[var(--secondary)] text-[var(--primary)] rounded text-[10px] font-bold hover:bg-[var(--primary)]/10 transition-colors">
+                                                        <Paperclip className="w-3 h-3" /> Bukti
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <span className={`badge ${info.badge} flex items-center gap-1`}>
+                                                <StatusIcon className="w-3 h-3" /> {info.label}
+                                            </span>
                                         </div>
-                                        <span className={`badge ${info.badge} flex items-center gap-1`}>
-                                            <StatusIcon className="w-3 h-3" /> {info.label}
-                                        </span>
+                                        <div className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+                                            <span>{l.startDate} — {l.endDate}</span>
+                                            <span className="text-[10px] text-[var(--text-muted)] bg-[var(--secondary)] px-2 py-0.5 rounded-full">
+                                                {Math.ceil((new Date(l.endDate).getTime() - new Date(l.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1} Hari
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-[var(--text-secondary)]">{l.reason}</p>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
-                                        <span>{l.startDate} — {l.endDate}</span>
-                                        <span className="text-[10px] text-[var(--text-muted)] bg-[var(--secondary)] px-2 py-0.5 rounded-full">
-                                            {Math.ceil((new Date(l.endDate).getTime() - new Date(l.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1} Hari
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-[var(--text-secondary)]">{l.reason}</p>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
+
+                        {leaves.length > ITEMS_PER_PAGE && (
+                            <div className="flex justify-between items-center px-2 py-1 mt-2">
+                                <button className="btn btn-secondary btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+                                <span className="text-xs font-medium text-[var(--text-muted)]">Halaman {currentPage} dari {totalPages}</span>
+                                <button className="btn btn-secondary btn-sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

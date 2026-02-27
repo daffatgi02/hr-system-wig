@@ -31,6 +31,13 @@ export default function EmployeeOvertimePage() {
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [filterStatus, setFilterStatus] = useState<string>("all");
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterStatus]);
+
     const [form, setForm] = useState({
         date: new Date().toISOString().split("T")[0],
         startTime: "17:00",
@@ -76,6 +83,9 @@ export default function EmployeeOvertimePage() {
 
     const totalApproved = requests.filter((r) => r.status === "approved").reduce((sum, r) => sum + r.hours, 0);
     const filtered = filterStatus === "all" ? requests : requests.filter((r) => r.status === filterStatus);
+
+    const paginatedRequests = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
 
     return (
         <div className="space-y-6 animate-[fadeIn_0.5s_ease] pb-20 lg:pb-0">
@@ -127,7 +137,7 @@ export default function EmployeeOvertimePage() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filtered.map((req) => {
+                    {paginatedRequests.map((req) => {
                         const cfg = STATUS_CONFIG[req.status];
                         return (
                             <div key={req.id} className="card p-4 hover:shadow-md transition-shadow">
@@ -150,6 +160,14 @@ export default function EmployeeOvertimePage() {
                             </div>
                         );
                     })}
+
+                    {filtered.length > ITEMS_PER_PAGE && (
+                        <div className="flex justify-between items-center px-4 py-3 mt-4 border-t border-[var(--border)]">
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+                            <span className="text-xs font-medium text-[var(--text-muted)]">Halaman {currentPage} dari {totalPages}</span>
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+                        </div>
+                    )}
                 </div>
             )}
 

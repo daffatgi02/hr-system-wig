@@ -43,6 +43,13 @@ export default function VisitsPage() {
     const [showForm, setShowForm] = useState(false);
     const [streaming, setStreaming] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 6;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterStatus]);
+
 
     useEffect(() => {
         fetch("/api/visits").then((r) => r.json()).then(setVisits);
@@ -130,6 +137,9 @@ export default function VisitsPage() {
 
     const filtered = filterStatus === "all" ? visits : visits.filter((v) => v.status === filterStatus);
 
+    const paginatedVisits = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+
     return (
         <div className="space-y-6 animate-[fadeIn_0.5s_ease] pb-20 lg:pb-0">
             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -178,44 +188,54 @@ export default function VisitsPage() {
                     <p className="text-sm text-[var(--text-muted)] mt-1">Laporan kunjungan Anda akan tampil di sini</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {filtered.map((visit) => {
-                        const cfg = STATUS_CONFIG[visit.status];
-                        return (
-                            <div
-                                key={visit.id}
-                                className="card p-5 hover:border-[var(--primary)] hover:shadow-md transition-all cursor-pointer group flex flex-col h-full bg-white"
-                                onClick={() => setSelectedVisit(visit)}
-                            >
-                                <div className="flex items-start justify-between gap-4 mb-3">
-                                    <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0">
-                                        <Building2 className="w-5 h-5" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-[15px] font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--primary)] transition-colors">
-                                            {visit.clientName}
-                                        </h3>
-                                        <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] mt-1.5">
-                                            <span className="flex items-center gap-1 truncate max-w-[150px]">
-                                                <Navigation className="w-3 h-3 shrink-0" />
-                                                <span className="truncate">{visit.clientAddress}</span>
-                                            </span>
-                                            <span className="flex items-center gap-1 shrink-0">
-                                                <Clock className="w-3 h-3 shrink-0" />
-                                                {visit.date}
-                                            </span>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {paginatedVisits.map((visit) => {
+                            const cfg = STATUS_CONFIG[visit.status];
+                            return (
+                                <div
+                                    key={visit.id}
+                                    className="card p-5 hover:border-[var(--primary)] hover:shadow-md transition-all cursor-pointer group flex flex-col h-full bg-white"
+                                    onClick={() => setSelectedVisit(visit)}
+                                >
+                                    <div className="flex items-start justify-between gap-4 mb-3">
+                                        <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center shrink-0">
+                                            <Building2 className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-[15px] font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--primary)] transition-colors">
+                                                {visit.clientName}
+                                            </h3>
+                                            <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] mt-1.5">
+                                                <span className="flex items-center gap-1 truncate max-w-[150px]">
+                                                    <Navigation className="w-3 h-3 shrink-0" />
+                                                    <span className="truncate">{visit.clientAddress}</span>
+                                                </span>
+                                                <span className="flex items-center gap-1 shrink-0">
+                                                    <Clock className="w-3 h-3 shrink-0" />
+                                                    {visit.date}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="mt-auto pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                                        <span className={`badge ${cfg.class} px-3 py-1 text-[11px] font-bold`}>{cfg.label}</span>
+                                        <span className="text-xs font-bold text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 translate-x-2 group-hover:translate-x-0">
+                                            Lihat Detail &rarr;
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="mt-auto pt-3 border-t border-[var(--border)] flex items-center justify-between">
-                                    <span className={`badge ${cfg.class} px-3 py-1 text-[11px] font-bold`}>{cfg.label}</span>
-                                    <span className="text-xs font-bold text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 translate-x-2 group-hover:translate-x-0">
-                                        Lihat Detail &rarr;
-                                    </span>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
+
+                    {filtered.length > ITEMS_PER_PAGE && (
+                        <div className="flex justify-between items-center px-4 py-3 border-t border-[var(--border)]">
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+                            <span className="text-xs font-medium text-[var(--text-muted)]">Halaman {currentPage} dari {totalPages}</span>
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+                        </div>
+                    )}
                 </div>
             )}
 

@@ -15,6 +15,9 @@ export default function PayslipPage() {
     const [payslips, setPayslips] = useState<Payslip[]>([]);
     const [selected, setSelected] = useState<Payslip | null>(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
     useEffect(() => {
         fetch("/api/payslips").then((r) => r.json()).then((data) => {
             if (Array.isArray(data)) setPayslips(data);
@@ -65,7 +68,7 @@ export default function PayslipPage() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {payslips.map((p) => (
+                    {payslips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((p) => (
                         <div key={p.id} className="card p-5">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -86,6 +89,14 @@ export default function PayslipPage() {
                             </div>
                         </div>
                     ))}
+
+                    {payslips.length > ITEMS_PER_PAGE && (
+                        <div className="flex justify-between items-center px-4 py-3 border-t border-[var(--border)] mt-4">
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)}>Prev</button>
+                            <span className="text-xs font-medium text-[var(--text-muted)]">Halaman {currentPage} dari {Math.ceil(payslips.length / ITEMS_PER_PAGE) || 1}</span>
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === (Math.ceil(payslips.length / ITEMS_PER_PAGE) || 1)} onClick={() => setCurrentPage(c => c + 1)}>Next</button>
+                        </div>
+                    )}
                 </div>
             )}
 

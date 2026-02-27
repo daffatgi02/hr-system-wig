@@ -20,11 +20,20 @@ export default function NewsPage() {
     const [selected, setSelected] = useState<NewsItem | null>(null);
     const [filter, setFilter] = useState("all");
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter]);
+
     useEffect(() => {
         fetch("/api/news").then((r) => r.json()).then(setNews);
     }, []);
 
     const filtered = filter === "all" ? news : news.filter((n) => n.category === filter);
+    const paginatedNews = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
 
     const getCategoryInfo = (cat: string) => {
         switch (cat) {
@@ -79,7 +88,7 @@ export default function NewsPage() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filtered.map((item) => {
+                    {paginatedNews.map((item) => {
                         const info = getCategoryInfo(item.category);
                         const CatIcon = info.icon;
                         return (
@@ -110,6 +119,14 @@ export default function NewsPage() {
                             </div>
                         );
                     })}
+
+                    {filtered.length > ITEMS_PER_PAGE && (
+                        <div className="flex justify-between items-center px-4 py-3 border-t border-[var(--border)] mt-4">
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)}>Prev</button>
+                            <span className="text-xs font-medium text-[var(--text-muted)]">Halaman {currentPage} dari {totalPages}</span>
+                            <button className="btn btn-secondary btn-sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)}>Next</button>
+                        </div>
+                    )}
                 </div>
             )}
 
