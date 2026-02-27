@@ -53,6 +53,8 @@ export default function PayrollPage() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
 
+    const [overtimeRequests, setOvertimeRequests] = useState<{ employeeId: string; date: string; overtimePay: number; status: string }[]>([]);
+
     useEffect(() => {
         fetch("/api/employees").then((r) => r.json()).then(setEmployees);
         fetch("/api/payslips").then((r) => r.json()).then((d: Payslip[]) => { if (Array.isArray(d)) setPayslips(d); });
@@ -61,6 +63,7 @@ export default function PayrollPage() {
         });
         fetch("/api/master/departments").then((r) => r.json()).then((d) => { if (Array.isArray(d)) setMasterDepts(d); });
         fetch("/api/master/divisions").then((r) => r.json()).then((d) => { if (Array.isArray(d)) setMasterDivisions(d); });
+        fetch("/api/overtime").then((r) => r.json()).then((d) => { if (Array.isArray(d)) setOvertimeRequests(d); });
     }, []);
 
     // Effect to auto-populate payroll data when employee is selected in Create Tab
@@ -75,6 +78,12 @@ export default function PayrollPage() {
         const emp = employees.find(e => e.employeeId === form.employeeId);
         if (emp) {
             setForm(f => ({ ...f, basicSalary: emp.basicSalary || 0 }));
+
+            // Auto-populate overtime from approved requests
+            const empOvertime = overtimeRequests
+                .filter(o => o.employeeId === form.employeeId && o.status === "approved" && o.date.startsWith(form.period))
+                .reduce((sum, o) => sum + (o.overtimePay || 0), 0);
+            setForm(f => ({ ...f, overtime: empOvertime }));
 
             if (emp.payrollComponents && emp.payrollComponents.length > 0) {
                 const allowances = emp.payrollComponents
@@ -92,7 +101,7 @@ export default function PayrollPage() {
                 setDeductions(active.filter(c => c.type === "deduction").map(c => ({ name: c.name, amount: c.defaultAmount })));
             }
         }
-    }, [form.employeeId, employees, masterComponents]);
+    }, [form.employeeId, form.period, employees, masterComponents, overtimeRequests]);
 
     const getEmpName = (empId: string) => employees.find((e) => e.employeeId === empId)?.name || empId;
 
@@ -124,11 +133,16 @@ export default function PayrollPage() {
     };
 
     const handleProsesRecap = (emp: Employee) => {
+        // Calculate overtime from approved requests for this employee and period
+        const empOvertime = overtimeRequests
+            .filter(o => o.employeeId === emp.employeeId && o.status === "approved" && o.date.startsWith(selectedPeriod))
+            .reduce((sum, o) => sum + (o.overtimePay || 0), 0);
+
         setForm({
             employeeId: emp.employeeId,
             period: selectedPeriod,
             basicSalary: emp.basicSalary || 0,
-            overtime: 0,
+            overtime: empOvertime,
             notes: "",
         });
 

@@ -83,6 +83,7 @@ export const overtimeCreateSchema = z.object({
     startTime: z.string().min(1, "Jam mulai harus diisi"),
     endTime: z.string().min(1, "Jam selesai harus diisi"),
     reason: z.string().min(1, "Alasan harus diisi"),
+    isHoliday: z.boolean().optional().default(false),
 });
 
 export const overtimeUpdateSchema = z.object({
@@ -92,6 +93,8 @@ export const overtimeUpdateSchema = z.object({
     startTime: z.string().optional(),
     endTime: z.string().optional(),
     reason: z.string().optional(),
+    approvedHours: z.number().positive().optional(),
+    isHoliday: z.boolean().optional(),
 });
 
 /* ───────────────────── Visit ───────────────────── */

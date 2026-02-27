@@ -14,6 +14,9 @@ interface OvertimeRequest {
     startTime: string;
     endTime: string;
     hours: number;
+    approvedHours?: number | null;
+    isHoliday: boolean;
+    overtimePay: number;
     reason: string;
     status: "pending" | "approved" | "rejected";
     createdAt: string;
@@ -31,6 +34,8 @@ export default function DashboardOvertimePage() {
     const [filterStatus, setFilterStatus] = useState<string>("all");
     const [selectedReq, setSelectedReq] = useState<OvertimeRequest | null>(null);
     const [updating, setUpdating] = useState<string | null>(null);
+    const [approvedHoursInput, setApprovedHoursInput] = useState<number>(0);
+    const [isHolidayInput, setIsHolidayInput] = useState(false);
 
     useEffect(() => {
         fetch("/api/overtime").then((r) => r.json()).then((d) => { if (Array.isArray(d)) setRequests(d); });
@@ -39,14 +44,18 @@ export default function DashboardOvertimePage() {
     const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
         setUpdating(id);
         try {
+            const body: Record<string, unknown> = { id, status };
+            if (status === "approved") {
+                body.approvedHours = approvedHoursInput;
+                body.isHoliday = isHolidayInput;
+            }
             const res = await fetch("/api/overtime", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, status }),
+                body: JSON.stringify(body),
             });
             if (res.ok) {
                 const updated = await res.json();
-                // Ensure we keep the employee name if updated doesn't include it
                 setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, ...updated } : r)));
                 if (selectedReq?.id === id) setSelectedReq({ ...selectedReq, ...updated });
             }
@@ -89,7 +98,7 @@ export default function DashboardOvertimePage() {
                     { label: "Menunggu", count: statusCounts.pending, color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
                     { label: "Disetujui", count: statusCounts.approved, color: "bg-green-50 text-green-700 border-green-200" },
                     { label: "Ditolak", count: statusCounts.rejected, color: "bg-red-50 text-red-700 border-red-200" },
-                    { label: "Total Jam", count: `${totalApprovedHours}h`, color: "bg-purple-50 text-purple-700 border-purple-200" },
+                    { label: "Total Jam", count: `${Number(totalApprovedHours.toFixed(2))}h`, color: "bg-purple-50 text-purple-700 border-purple-200" },
                 ].map((stat) => (
                     <div key={stat.label} className={`p-3 rounded-xl border ${stat.color}`}>
                         <p className="text-2xl font-bold">{stat.count}</p>
@@ -97,6 +106,8 @@ export default function DashboardOvertimePage() {
                     </div>
                 ))}
             </div>
+
+            {/* Fmt helper */}
 
             {/* Search & Filter */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -129,6 +140,7 @@ export default function DashboardOvertimePage() {
                                 <th className="hidden md:table-cell">Jam</th>
                                 <th className="hidden md:table-cell">Durasi</th>
                                 <th className="hidden lg:table-cell">Alasan</th>
+                                <th>Upah Lembur</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -149,14 +161,21 @@ export default function DashboardOvertimePage() {
                                             </td>
                                             <td className="text-xs">{r.date}</td>
                                             <td className="hidden md:table-cell text-xs">{r.startTime} — {r.endTime}</td>
-                                            <td className="hidden md:table-cell text-xs font-semibold">{r.hours}h</td>
+                                            <td className="hidden md:table-cell text-xs font-semibold">{Number(r.hours.toFixed(2))}h</td>
                                             <td className="hidden lg:table-cell text-xs text-[var(--text-secondary)] max-w-[200px]">
                                                 <p className="line-clamp-2">{r.reason}</p>
+                                            </td>
+                                            <td className="text-xs font-semibold text-green-600">
+                                                {r.overtimePay > 0 ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(r.overtimePay) : "-"}
                                             </td>
                                             <td><span className={`badge ${cfg.class}`}>{cfg.label}</span></td>
                                             <td>
                                                 <div className="flex items-center gap-1">
-                                                    <button onClick={() => setSelectedReq(r)} className="btn btn-ghost btn-sm !p-1.5" title="Detail">
+                                                    <button onClick={() => {
+                                                        setSelectedReq(r);
+                                                        setApprovedHoursInput(r.approvedHours ?? r.hours);
+                                                        setIsHolidayInput(r.isHoliday ?? false);
+                                                    }} className="btn btn-ghost btn-sm !p-1.5" title="Detail">
                                                         <Eye className="w-3.5 h-3.5" />
                                                     </button>
                                                     {r.status === "pending" && (
@@ -218,7 +237,7 @@ export default function DashboardOvertimePage() {
                                 </div>
                                 <div>
                                     <p className="text-xs text-[var(--text-muted)] mb-1 flex items-center gap-1"><Clock className="w-3 h-3" /> Jam Lembur</p>
-                                    <p className="text-sm text-[var(--text-secondary)]">{selectedReq.startTime} — {selectedReq.endTime} ({selectedReq.hours} jam)</p>
+                                    <p className="text-sm text-[var(--text-secondary)]">{selectedReq.startTime} — {selectedReq.endTime} ({Number(selectedReq.hours.toFixed(2))} jam)</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-[var(--text-muted)] mb-1 flex items-center gap-1"><FileText className="w-3 h-3" /> Alasan</p>
@@ -227,21 +246,71 @@ export default function DashboardOvertimePage() {
                             </div>
 
                             {selectedReq.status === "pending" && (
-                                <div className="flex gap-2 pt-2 border-t border-[var(--border)]">
-                                    <button
-                                        onClick={() => handleStatusUpdate(selectedReq.id, "approved")}
-                                        className="btn btn-primary flex-1"
-                                        disabled={updating === selectedReq.id}
-                                    >
-                                        <CheckCircle className="w-4 h-4" /> Setujui
-                                    </button>
-                                    <button
-                                        onClick={() => handleStatusUpdate(selectedReq.id, "rejected")}
-                                        className="btn btn-secondary flex-1 !text-red-600 !border-red-200 hover:!bg-red-50"
-                                        disabled={updating === selectedReq.id}
-                                    >
-                                        <XCircle className="w-4 h-4" /> Tolak
-                                    </button>
+                                <div className="space-y-4 pt-3 border-t border-[var(--border)]">
+                                    <div className="form-group !mb-0">
+                                        <label className="form-label">Jam Disetujui</label>
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            value={approvedHoursInput}
+                                            onChange={(e) => setApprovedHoursInput(Number(e.target.value))}
+                                            min={0.5}
+                                            max={12}
+                                            step={0.5}
+                                        />
+                                        <p className="text-[10px] text-[var(--text-muted)] mt-1">Karyawan mengajukan {Number(selectedReq.hours.toFixed(2))} jam</p>
+                                    </div>
+                                    <div className="form-group !mb-0">
+                                        <label className="form-label">Tipe Hari</label>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsHolidayInput(false)}
+                                                className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${!isHolidayInput ? "bg-[var(--primary)] text-white border-[var(--primary)]" : "bg-white text-[var(--text-secondary)] border-[var(--border)]"
+                                                    }`}
+                                            >
+                                                Hari Kerja
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsHolidayInput(true)}
+                                                className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${isHolidayInput ? "bg-orange-500 text-white border-orange-500" : "bg-white text-[var(--text-secondary)] border-[var(--border)]"
+                                                    }`}
+                                            >
+                                                Hari Libur
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleStatusUpdate(selectedReq.id, "approved")}
+                                            className="btn btn-primary flex-1"
+                                            disabled={updating === selectedReq.id}
+                                        >
+                                            <CheckCircle className="w-4 h-4" /> Setujui
+                                        </button>
+                                        <button
+                                            onClick={() => handleStatusUpdate(selectedReq.id, "rejected")}
+                                            className="btn btn-secondary flex-1 !text-red-600 !border-red-200 hover:!bg-red-50"
+                                            disabled={updating === selectedReq.id}
+                                        >
+                                            <XCircle className="w-4 h-4" /> Tolak
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedReq.status === "approved" && selectedReq.overtimePay > 0 && (
+                                <div className="pt-3 border-t border-[var(--border)]">
+                                    <div className="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-200">
+                                        <div>
+                                            <p className="text-xs text-green-700 font-medium">Upah Lembur (PP 35/2021)</p>
+                                            <p className="text-[10px] text-green-600">{Number((selectedReq.approvedHours ?? selectedReq.hours).toFixed(2))} jam disetujui</p>
+                                        </div>
+                                        <p className="text-lg font-extrabold text-green-700">
+                                            {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(selectedReq.overtimePay)}
+                                        </p>
+                                    </div>
                                 </div>
                             )}
                         </div>

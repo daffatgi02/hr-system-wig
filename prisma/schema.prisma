@@ -170,16 +170,19 @@ model TodoItem {
 }
 
 model OvertimeRequest {
-  id         String   @id @default(uuid())
-  employeeId String   @map("employee_id")
-  date       String
-  startTime  String   @map("start_time")
-  endTime    String   @map("end_time")
-  hours      Float
-  reason     String   @db.Text
-  status     String   @default("pending")
-  createdAt  String   @map("created_at")
-  employee   Employee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  employeeId    String   @map("employee_id")
+  date          String
+  startTime     String   @map("start_time")
+  endTime       String   @map("end_time")
+  hours         Float
+  approvedHours Float?   @map("approved_hours")
+  isHoliday     Boolean  @default(false) @map("is_holiday")
+  overtimePay   Float    @default(0) @map("overtime_pay")
+  reason        String   @db.Text
+  status        String   @default("pending")
+  createdAt     String   @map("created_at")
+  employee      Employee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
 
   @@index([employeeId], map: "overtime_requests_employee_id_fkey")
   @@map("overtime_requests")

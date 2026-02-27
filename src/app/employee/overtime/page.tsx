@@ -43,6 +43,7 @@ export default function EmployeeOvertimePage() {
         startTime: "17:00",
         endTime: "19:00",
         reason: "",
+        isHoliday: false,
     });
 
     useEffect(() => {
@@ -50,7 +51,7 @@ export default function EmployeeOvertimePage() {
     }, []);
 
     const resetForm = () => {
-        setForm({ date: new Date().toISOString().split("T")[0], startTime: "17:00", endTime: "19:00", reason: "" });
+        setForm({ date: new Date().toISOString().split("T")[0], startTime: "17:00", endTime: "19:00", reason: "", isHoliday: false });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -214,6 +215,18 @@ export default function EmployeeOvertimePage() {
                                 <textarea className="form-input min-h-[80px] resize-none" value={form.reason}
                                     onChange={(e) => setForm({ ...form, reason: e.target.value })}
                                     placeholder="Jelaskan alasan dan pekerjaan yang dilakukan..." required />
+                            </div>
+
+                            <div className="form-group !mb-0">
+                                <label className="flex items-center gap-2.5 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.isHoliday}
+                                        onChange={(e) => setForm({ ...form, isHoliday: e.target.checked })}
+                                        className="w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                                    />
+                                    <span className="text-sm text-[var(--text-secondary)]">Hari Libur / Istirahat Mingguan</span>
+                                </label>
                             </div>
 
                             <button type="submit" className="btn btn-primary w-full" disabled={loading}>

@@ -137,6 +137,9 @@ export type OvertimeRequest = {
     startTime: string;
     endTime: string;
     hours: number;
+    approvedHours?: number | null;
+    isHoliday: boolean;
+    overtimePay: number;
     reason: string;
     status: "pending" | "approved" | "rejected";
     createdAt: string;

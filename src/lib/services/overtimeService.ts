@@ -39,7 +39,7 @@ export async function createOvertimeRequest(data: Omit<OvertimeRequest, "id">): 
     return row as OvertimeRequest;
 }
 
-export async function updateOvertimeRequest(id: string, data: Partial<OvertimeRequest>): Promise<OvertimeRequest | null> {
+export async function updateOvertimeRequest(id: string, data: Partial<OvertimeRequest> & Record<string, unknown>): Promise<OvertimeRequest | null> {
     try {
         const row = await prisma.overtimeRequest.update({
             where: { id },
@@ -50,6 +50,9 @@ export async function updateOvertimeRequest(id: string, data: Partial<OvertimeRe
                 ...(data.hours !== undefined && { hours: data.hours }),
                 ...(data.reason !== undefined && { reason: data.reason }),
                 ...(data.status !== undefined && { status: data.status }),
+                ...(data.approvedHours !== undefined && { approvedHours: data.approvedHours }),
+                ...(data.isHoliday !== undefined && { isHoliday: data.isHoliday }),
+                ...(data.overtimePay !== undefined && { overtimePay: data.overtimePay }),
             },
         });
         return row as OvertimeRequest;
