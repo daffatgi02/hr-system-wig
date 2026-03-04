@@ -165,6 +165,7 @@ function generateGuideline() {
         "   4.8. Berita & Pengumuman",
         "   4.9. To-Do List",
         "   4.10. Pengaturan (Password & Face ID)",
+        "   4.11. Helpdesk & Knowledge Base",
         "5. Dashboard HR (Admin Panel)",
         "   5.1. Dashboard Utama & KPI",
         "   5.2. Manajemen Absensi",
@@ -180,6 +181,8 @@ function generateGuideline() {
         "   5.12. Kalkulator BPJS",
         "   5.13. Laporan & Export",
         "   5.14. WIG News",
+        "   5.15. Helpdesk & Manajemen SLA",
+        "   5.16. Manajemen Knowledge Base",
         "6. Fitur Keamanan",
         "   6.1. Verifikasi Wajah (Face Recognition)",
         "   6.2. Validasi GPS Anti-Fake",
@@ -324,8 +327,9 @@ function generateGuideline() {
     y = addNumbered(doc, [
         "Buka menu \"Absensi\" dari navigasi.",
         "Izinkan akses kamera dan lokasi jika diminta oleh browser.",
-        "Sistem akan menampilkan kamera selfie — posisikan wajah di area yang ditandai.",
-        "Sistem memvalidasi: (a) Verifikasi wajah, (b) Lokasi GPS, (c) Anti-fake GPS detection.",
+        "Sistem otomatis memilih kamera terbaik (mendukung kamera belakang/ultrawide).",
+        "Sistem menampilkan layar kamera — posisikan wajah di area yang ditandai.",
+        "Sistem memvalidasi: (a) Verifikasi wajah, (b) Lokasi GPS, (c) Anti-fake GPS.",
         "Jika semua validasi berhasil, klik tombol \"Clock In\".",
         "Foto selfie dan lokasi GPS akan tercatat otomatis.",
     ], y);
@@ -365,18 +369,16 @@ function generateGuideline() {
     y = checkPage(doc, y, 50);
     y = addSubHeader(doc, "4.4. Laporan Kunjungan", y);
     y = addBody(doc, [
-        "Fitur untuk mencatat laporan kunjungan kerja ke klien atau lokasi eksternal.",
+        "Fitur untuk mencatat laporan kunjungan kerja dengan desain UI card modern.",
     ], y);
     y = addSpacer(y, 3);
-    y = addBody(doc, ["Cara Membuat Laporan Kunjungan:"], y);
+    y = addBody(doc, ["Cara Membuat & Melihat Laporan:"], y);
     y = addNumbered(doc, [
-        "Buka menu \"Kunjungan\".",
-        "Klik tombol \"Tambah Kunjungan\".",
-        "Isi form: Nama Klien, Alamat, Tujuan Kunjungan, Hasil (opsional), Catatan.",
-        "Ambil foto bukti kunjungan (opsional).",
-        "Lokasi GPS akan tercatat otomatis.",
-        "Klik \"Simpan\" — laporan masuk dengan status \"Pending\".",
-        "HR akan mereview dan mengubah status menjadi \"Disetujui\" atau \"Ditolak\".",
+        "Buka menu \"Kunjungan\" untuk melihat daftar card kunjungan secara rapi.",
+        "Klik \"Tambah Kunjungan\" dan isi Nama Klien, Alamat, Tujuan, Hasil, Catatan.",
+        "Ambil foto bukti kunjungan. Lokasi GPS akan tercatat otomatis.",
+        "Klik \"Simpan\". Laporan akan masuk berstatus \"Pending\".",
+        "Klik tombol \"Action Detail\" pada card untuk melihat detail di dalam modal pop-up.",
     ], y);
 
     // 4.5 Lembur
@@ -384,19 +386,19 @@ function generateGuideline() {
     y = checkPage(doc, y, 50);
     y = addSubHeader(doc, "4.5. Pengajuan Lembur", y);
     y = addBody(doc, [
-        "Karyawan dapat mengajukan lembur melalui fitur ini.",
+        "Pengajuan lembur terintegrasi dengan kalkulasi lembur standar PP 35/2021.",
     ], y);
     y = addSpacer(y, 3);
     y = addBody(doc, ["Cara Mengajukan Lembur:"], y);
     y = addNumbered(doc, [
-        "Buka menu \"Lembur\".",
-        "Klik \"Ajukan Lembur\".",
-        "Isi: Tanggal, Jam Mulai, Jam Selesai, Alasan/Deskripsi Pekerjaan.",
-        "Total jam lembur dihitung otomatis oleh sistem.",
+        "Buka menu \"Lembur\" dan klik \"Ajukan Lembur\".",
+        "Isi: Tanggal, Jam Mulai, Jam Selesai, serta centang jika hari libur/istirahat.",
+        "Isi Alasan/Deskripsi Pekerjaan.",
+        "Total jam lembur dihitung otomatis secara akurat oleh sistem.",
         "Klik \"Kirim\" — pengajuan masuk antrian persetujuan HR.",
     ], y);
     y = addBullet(doc, [
-        "Status: Pending (menunggu) → Approved (disetujui) / Rejected (ditolak).",
+        "Status: Pending → Approved / Rejected.",
     ], y);
 
     // 4.6 Slip Gaji
@@ -481,6 +483,28 @@ function generateGuideline() {
         "Face ID digunakan untuk verifikasi saat absensi.",
     ], y);
 
+    // 4.11 Helpdesk & Knowledge Base
+    y = addSpacer(y, 6);
+    y = checkPage(doc, y, 60);
+    y = addSubHeader(doc, "4.11. Helpdesk & Knowledge Base (Pusat Bantuan)", y);
+    y = addBody(doc, [
+        "Fasilitas mandiri untuk mencari solusi teknis atau melaporkan kendala ke HR/IT.",
+    ], y);
+    y = addSpacer(y, 3);
+    y = addBody(doc, ["A. Knowledge Base (Artikel Bantuan):"], y);
+    y = addBullet(doc, [
+        "Buka menu \"Knowledge Base\".",
+        "Cari artikel panduan menggunakan fitur pencarian atau jelajahi kategori.",
+        "Berikan feedback (bermanfaat/tidak) di akhir artikel.",
+    ], y);
+    y = addSpacer(y, 3);
+    y = addBody(doc, ["B. Tiket Bantuan (Helpdesk):"], y);
+    y = addNumbered(doc, [
+        "Jika artikel tidak membantu, buka menu \"Tiket Saya\" dan buat tiket baru.",
+        "Pilih Kategori Kendala, Prioritas, dan jelaskan detail masalah.",
+        "Tiket dikirim dan Anda dapat memantau status serta chat langsung dengan tim HR.",
+    ], y);
+
     // ═══════════════════════════════════════════════════════════════════
     // BAB 5: DASHBOARD HR
     // ═══════════════════════════════════════════════════════════════════
@@ -497,18 +521,13 @@ function generateGuideline() {
     y = addSpacer(y, 6);
     y = addSubHeader(doc, "5.1. Dashboard Utama & KPI", y);
     y = addBody(doc, [
-        "Halaman utama menampilkan ringkasan statistik perusahaan secara real-time:",
+        "Halaman dashboard profesional dengan card KPI seragam dan navigasi mulus:",
     ], y);
     y = addBullet(doc, [
-        "Total Karyawan Aktif — jumlah karyawan yang terdaftar dan aktif.",
-        "Hadir Hari Ini — jumlah karyawan yang sudah clock-in.",
-        "Terlambat Hari Ini — jumlah karyawan yang terlambat menurut jadwal shift.",
-        "Cuti Pending — jumlah pengajuan cuti yang menunggu persetujuan.",
-        "Kunjungan Pending — laporan kunjungan yang belum di-review.",
-        "Lembur Pending — pengajuan lembur yang belum disetujui.",
-        "Distribusi per Departemen — persentase karyawan per departemen dalam bentuk chart.",
-        "Aktivitas Terbaru — log aktivitas terbaru (absensi, cuti, slip gaji).",
-        "Kalender Cuti — tampilan kalender visual untuk jadwal cuti karyawan.",
+        "Total Karyawan, Hadir, Terlambat, Cuti/Lembur/Kunjungan Pending.",
+        "Grafik Distribusi per Departemen.",
+        "Aktivitas Terbaru — Daftar panjang didukung fitur paginasi agar halaman rapi.",
+        "Kalender Cuti Ringkas — Tampilan kalender yang lebih padat (compact view).",
     ], y);
 
     // 5.2 Manajemen Absensi
@@ -643,12 +662,13 @@ function generateGuideline() {
 
     // 5.8 Lembur
     y = addSpacer(y, 6);
-    y = checkPage(doc, y, 40);
-    y = addSubHeader(doc, "5.8. Manajemen Lembur", y);
+    y = checkPage(doc, y, 60);
+    y = addSubHeader(doc, "5.8. Manajemen Lembur & Kalkulator PP 35/2021", y);
     y = addBullet(doc, [
-        "Lihat semua pengajuan lembur dari karyawan.",
-        "Approve atau reject pengajuan.",
-        "Total jam lembur tercatat dan dapat diintegrasikan ke perhitungan payroll.",
+        "Lihat pengajuan lembur dengan deteksi otomatis Hari Kerja/Libur.",
+        "Sistem menghitung upah lembur otomatis berdasarkan aturan PP 35/2021.",
+        "Approve atau reject pengajuan (jam lembur dapat diedit HR sebelum disetujui).",
+        "Kalkulator Lembur Manual: Tersedia di Master Payroll untuk simulasi instan.",
     ], y);
 
     // 5.9 Payroll
@@ -664,19 +684,17 @@ function generateGuideline() {
     y = addNumbered(doc, [
         "Buka menu \"Payroll\" dan pilih tab \"Buat Slip Gaji\".",
         "Pilih karyawan.",
-        "Isi komponen: Gaji Pokok, Tunjangan (multiple), dan Potongan (multiple).",
-        "Masukkan nilai lembur (jika ada).",
-        "Gaji Bersih (Net Salary) dihitung otomatis oleh sistem.",
+        "Isi komponen, tunjangan, potongan. Nilai lembur ditarik otomatis dari pengajuan.",
+        "Gaji Bersih dihitung otomatis oleh sistem.",
         "Pilih periode dan tanggal terbit lalu klik \"Terbitkan\".",
     ], y);
     y = addSpacer(y, 3);
     y = checkPage(doc, y, 40);
     y = addBody(doc, ["B. Rekapitulasi & Riwayat Payroll:"], y);
     y = addBullet(doc, [
-        "Rekap Payroll: Menampilkan ringkasan total gaji yang telah diproses per periode.",
-        "Riwayat Payroll: Menampilkan detail histori slip gaji setiap karyawan.",
-        "Advanced Filtering: Filter data berdasarkan Pencarian Nama, Departemen, dan Divisi.",
-        "Export Laporan: Dilengkapi dengan fitur Export Data ke PDF dan Excel (.xlsx).",
+        "Menampilkan ringkasan total gaji serta detail histori gaji karyawan.",
+        "Advanced Filtering: Dinamis berdasarkan Nama, Departemen, & Divisi.",
+        "Export Laporan: Export file secara profesional ke format PDF & Excel (.xlsx).",
     ], y);
 
     // 5.10 Pengaturan Payroll
@@ -773,6 +791,31 @@ function generateGuideline() {
         "Upload media/gambar (opsional).",
         "Centang \"Sematkan\" jika ingin berita selalu tampil di atas.",
         "Klik \"Publikasikan\".",
+    ], y);
+
+    // 5.15 Helpdesk & Manajemen SLA
+    y = addSpacer(y, 6);
+    y = checkPage(doc, y, 60);
+    y = addSubHeader(doc, "5.15. Helpdesk & Manajemen SLA", y);
+    y = addBody(doc, [
+        "Pusat pengelolaan tiket bantuan dari karyawan berstandar SLA.",
+    ], y);
+    y = addBullet(doc, [
+        "Pantau tiket dengan status (Open, In Progress, Closed) dan live chat.",
+        "Pemantauan SLA: First Response (batas respons awal) & Resolution Due.",
+        "SLA berjalan di Jam Bisnis. Tiket otomatis dilabeli Breached jika telat.",
+    ], y);
+
+    // 5.16 Manajemen Knowledge Base
+    y = addSpacer(y, 6);
+    y = checkPage(doc, y, 50);
+    y = addSubHeader(doc, "5.16. Manajemen Knowledge Base", y);
+    y = addBody(doc, [
+        "Fitur CMS untuk dokumentasi dan panduan mandiri perusahaan.",
+    ], y);
+    y = addBullet(doc, [
+        "Kelola kategori (HR, IT, dll) dan buat artikel berbasis Rich Text.",
+        "Lihat statistik artikel, seperti jumlah View dan persentase Helpful.",
     ], y);
 
     // ═══════════════════════════════════════════════════════════════════
